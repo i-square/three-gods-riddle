@@ -61,11 +61,11 @@ function setAuthMode(register) {
 authForm.onsubmit = async (e) => {
     e.preventDefault();
     const endpoint = isRegisterMode ? '/register' : '/token';
-    const body = isRegisterMode 
+    const body = isRegisterMode
         ? JSON.stringify({ username: usernameInput.value, password: passwordInput.value })
         : new URLSearchParams({ username: usernameInput.value, password: passwordInput.value }); // OAuth2 expects form data
-    
-    const headers = isRegisterMode 
+
+    const headers = isRegisterMode
         ? { 'Content-Type': 'application/json' }
         : { 'Content-Type': 'application/x-www-form-urlencoded' };
 
@@ -94,7 +94,7 @@ async function showGame() {
     authSection.classList.add('hidden');
     gameSection.classList.remove('hidden');
     displayUsername.innerText = usernameInput.value || "User"; // Simple fallback
-    
+
     await startNewGame();
 }
 
@@ -105,13 +105,13 @@ async function startNewGame() {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         if (res.status === 401) {
-             localStorage.removeItem('token');
-             location.reload();
-             return;
+            localStorage.removeItem('token');
+            location.reload();
+            return;
         }
         const data = await res.json();
         sessionId = data.session_id;
-        
+
         // Reset UI
         questionsLeft = 3;
         qLeftSpan.innerText = 3;
@@ -119,7 +119,7 @@ async function startNewGame() {
         document.querySelectorAll('.god-guess').forEach(s => s.value = 'Unsure');
         currentTargetIndex = null;
         updateTargetUI();
-        
+
     } catch (err) {
         console.error(err);
     }
@@ -132,7 +132,7 @@ window.prepareQuestion = (index) => {
     godCards.forEach(c => c.classList.remove('border-indigo-500', 'shadow-lg', 'bg-gray-700'));
     const target = document.querySelector(`.god-card[data-index="${index}"]`);
     target.classList.add('border-indigo-500', 'shadow-lg', 'bg-gray-700');
-    
+
     updateTargetUI();
 };
 
@@ -166,20 +166,20 @@ btnSubmitQ.onclick = async () => {
 
     // Optimistic UI update
     if (chatHistory.querySelector('.text-center')) chatHistory.innerHTML = ''; // Remove empty msg
-    
+
     const userBubble = document.createElement('div');
     userBubble.className = 'chat-bubble-user';
     userBubble.innerHTML = `<strong>To God ${godLetter}:</strong> ${qText}`;
     chatHistory.appendChild(userBubble);
     questionInput.value = '';
-    
+
     // Scroll to bottom
     chatHistory.scrollTop = chatHistory.scrollHeight;
 
     try {
         const res = await fetch('/game/ask', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
             },
@@ -189,7 +189,7 @@ btnSubmitQ.onclick = async () => {
                 question: qText
             })
         });
-        
+
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail);
 
@@ -211,15 +211,15 @@ btnSubmitQ.onclick = async () => {
 document.getElementById('btn-finalize').onclick = async () => {
     const guesses = [];
     document.querySelectorAll('.god-guess').forEach(s => guesses.push(s.value));
-    
+
     if (guesses.includes('Unsure')) {
-        if(!confirm("You haven't assigned identities to all Gods. Submit anyway?")) return;
+        if (!confirm("You haven't assigned identities to all Gods. Submit anyway?")) return;
     }
 
     try {
         const res = await fetch('/game/submit', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
             },
@@ -228,7 +228,7 @@ document.getElementById('btn-finalize').onclick = async () => {
                 guesses: guesses
             })
         });
-        
+
         const data = await res.json();
         showResultModal(data);
     } catch (err) {
@@ -239,7 +239,7 @@ document.getElementById('btn-finalize').onclick = async () => {
 function showResultModal(data) {
     modalOverlay.classList.remove('hidden');
     modalTitle.innerText = data.win ? "🎉 VICTORY! 🎉" : "💀 DEFEAT 💀";
-    
+
     let html = `
         <div class="text-lg mb-4 text-center">${data.win ? "You have correctly solved the riddle!" : "Your logic was flawed."}</div>
         <div class="bg-gray-900 p-4 rounded text-sm font-mono">
@@ -262,7 +262,7 @@ modalClose.onclick = () => {
 
 // History (Simple Alert for now, could be a modal)
 document.getElementById('btn-history').onclick = async () => {
-    const res = await fetch('/history', { headers: { 'Authorization': `Bearer ${authToken}` }});
+    const res = await fetch('/history', { headers: { 'Authorization': `Bearer ${authToken}` } });
     const data = await res.json();
     let text = "Recent Games:\n";
     data.slice(0, 5).forEach(g => {
