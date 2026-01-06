@@ -4,12 +4,9 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session, select
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from datetime import timedelta, datetime
+import bcrypt
 import jwt
-from passlib.context import CryptContext
+from datetime import timedelta, datetime
 import json
 
 from app.models import User, GameSession, create_db_and_tables, engine
@@ -20,13 +17,14 @@ from pydantic import BaseModel
 # --- Setup ---
 app = FastAPI(title="Three Gods Riddle")
 
-# Rate Limiter
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# Auth Utils (Native bcrypt)
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
-# Auth Utils
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Templates & Static
@@ -87,13 +85,12 @@ async def read_root(request: Request):
 
 # Auth Routes
 @app.post("/register", response_model=Token)
-@limiter.limit("5/minute")
-async def register(user_data: UserCreate, request: Request, db: Session = Depends(get_db)):
+async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     user = db.get(User, user_data.username)
     if user:
         raise HTTPException(status_code=400, detail="Username already registered")
     
-    hashed_pw = pwd_context.hash(user_data.password)
+    hashed_pw = hash_password(user_data.password)
     new_user = User(id=user_data.username, hashed_password=hashed_pw)
     db.add(new_user)
     db.commit()
@@ -103,10 +100,9 @@ async def register(user_data: UserCreate, request: Request, db: Session = Depend
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/token", response_model=Token)
-@limiter.limit("10/minute")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db), request: Request = None):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.get(User, form_data.username)
-    if not user or not pwd_context.verify(form_data.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     
     access_token = create_access_token(data={"sub": user.id})
@@ -122,15 +118,13 @@ def create_access_token(data: dict):
 # Game Routes
 
 @app.post("/game/start")
-@limiter.limit("10/minute")
-async def start_game(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def start_game(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Check if there's an unfinished game? For simplicity, we allow new games always.
     session = game_engine.start_new_game(current_user.id, db)
     return {"session_id": session.session_id, "message": "Game started. Identify the gods!"}
 
 @app.post("/game/ask")
-@limiter.limit("20/minute")
-async def ask_god(req: AskQuestionRequest, request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def ask_god(req: AskQuestionRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     session = db.get(GameSession, req.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -150,8 +144,7 @@ async def ask_god(req: AskQuestionRequest, request: Request, current_user: User 
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/game/submit")
-@limiter.limit("5/minute")
-async def submit_guess(req: GuessRequest, request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def submit_guess(req: GuessRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     session = db.get(GameSession, req.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")

@@ -45,14 +45,14 @@ cp llm.yaml.template llm.yaml
 openai:
   base_url: "https://api.openai.com/v1" # 或其他兼容接口
   api_key: "sk-xxxxxx"
-  model: "gpt-3.5-turbo" # 或其他模型
+  model: "gpt-4.1-mini" # 或其他模型
   temperature: 0.1
 ```
 
 ### 3. 运行服务
 
 ```bash
-python run.py
+python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 服务将启动在 `http://127.0.0.1:8000`。
