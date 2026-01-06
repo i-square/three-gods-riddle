@@ -74,6 +74,10 @@
     "playAgain": "再玩一次",
     "questionsLeft": "剩余问题数",
     "random": "Random（随机）",
+    "rulesTitle": "游戏规则速览",
+    "rule1": "True (真理) 永远说真话，False (谎言) 永远说假话。",
+    "rule2": "Random (随机) 的回答完全不可预测。",
+    "rule3": "Ja 和 Da 分别代表 Yes 和 No，但你不知道具体的对应关系。",
     "selectIdentity": "- 选择身份 -",
     "submitJudgment": "提交最终判断",
     "targeting": "当前目标",
@@ -101,6 +105,11 @@
     "viewDetails": "查看详情",
     "win": "胜利",
     "yourGuess": "你的猜测"
+  },
+  "identity": {
+    "true": "True (真理)",
+    "false": "False (谎言)",
+    "random": "Random (随机)"
   },
   "nav": {
     "admin": "管理后台",

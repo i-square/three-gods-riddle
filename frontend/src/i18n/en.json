@@ -74,6 +74,10 @@
     "playAgain": "Play Again",
     "questionsLeft": "Questions Left",
     "random": "Random",
+    "rulesTitle": "Game Rules Quick Reference",
+    "rule1": "True always speaks the truth, False always lies.",
+    "rule2": "Random answers completely randomly.",
+    "rule3": "Ja and Da mean Yes and No, but you don't know which is which.",
     "selectIdentity": "- Identity? -",
     "submitJudgment": "Submit Final Judgment",
     "targeting": "Targeting",
@@ -101,6 +105,11 @@
     "viewDetails": "View Details",
     "win": "WIN",
     "yourGuess": "Your Guess"
+  },
+  "identity": {
+    "true": "True",
+    "false": "False",
+    "random": "Random"
   },
   "nav": {
     "admin": "Admin",

@@ -67,10 +67,10 @@ export function Navbar({ currentPage, onNavigate, onTutorialClick }: NavbarProps
             </button>
             <button
               onClick={toggleLanguage}
-              className="text-gray-300 hover:text-white p-2 rounded-md hover:bg-gray-700"
+              className="text-gray-300 hover:text-white p-2 rounded-md hover:bg-gray-700 flex items-center"
             >
-              <Globe className="w-5 h-5" />
-              <span className="ml-1 text-sm">{i18n.language.toUpperCase()}</span>
+              <Globe className="w-5 h-5 flex-shrink-0" />
+              <span className="ml-1 text-sm whitespace-nowrap">{i18n.language === 'en' ? '中文' : 'English'}</span>
             </button>
             <span className="text-gray-400 text-sm">{user?.id}</span>
             <button

@@ -1,8 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select, col
 import bcrypt
@@ -39,9 +37,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def get_db():
@@ -164,11 +159,6 @@ def on_startup():
     create_db_and_tables()
     with Session(engine) as db:
         init_root_user(db)
-
-
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.post("/register", response_model=TokenResponse)
@@ -301,11 +291,11 @@ async def ask_god(
         raise HTTPException(status_code=400, detail="Game already completed")
 
     try:
-        answer = game_engine.process_question(session, req.god_index, req.question, db)
+        result = game_engine.process_question(session, req.god_index, req.question, db)
         return {
-            "answer": answer,
+            "answer": result["answer"],
             "questions_left": 3 - session.current_question_count,
-            "history": json.loads(session.move_history),
+            "history": result["history"],
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -350,15 +340,16 @@ async def get_history(
     history_data = []
     for game in results:
         move_history = json.loads(game.move_history) if game.move_history else []
-        history_data.append(
-            {
-                "id": game.session_id,
-                "date": game.created_at.isoformat(),
-                "win": game.is_win,
-                "completed": game.is_completed,
-                "questions_asked": len(move_history),
-            }
-        )
+        if len(move_history) > 0:
+            history_data.append(
+                {
+                    "id": game.session_id,
+                    "date": game.created_at.isoformat(),
+                    "win": game.is_win,
+                    "completed": game.is_completed,
+                    "questions_asked": len(move_history),
+                }
+            )
     return history_data
 
 

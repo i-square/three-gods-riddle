@@ -85,7 +85,9 @@ export function GameReplay({ gameId, onBack }: GameReplayProps) {
             <div className="text-center">
               <div className="text-3xl font-bold text-indigo-300 mb-2">{label}</div>
               <div className="text-sm text-gray-400 mb-1">{t('history.actualIdentity')}</div>
-              <div className="text-lg font-semibold text-white">{game.god_identities[idx]}</div>
+              <div className="text-lg font-semibold text-white">
+                {t(`identity.${game.god_identities[idx].toLowerCase()}`)}
+              </div>
               {game.user_guesses && (
                 <>
                   <div className="text-sm text-gray-400 mt-2 mb-1">{t('history.yourGuess')}</div>
@@ -96,7 +98,7 @@ export function GameReplay({ gameId, onBack }: GameReplayProps) {
                         : 'text-red-400'
                     }`}
                   >
-                    {game.user_guesses[idx]}
+                    {t(`identity.${game.user_guesses[idx].toLowerCase()}`)}
                   </div>
                 </>
               )}

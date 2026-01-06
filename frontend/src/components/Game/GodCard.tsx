@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { VenetianMask } from 'lucide-react';
 
 interface GodCardProps {
   godIndex: number;
@@ -7,6 +8,7 @@ interface GodCardProps {
   onGuessChange: (guess: string) => void;
   isSelected: boolean;
   onSelect: () => void;
+  disabledOptions: string[];
 }
 
 export function GodCard({
@@ -15,8 +17,11 @@ export function GodCard({
   onGuessChange,
   isSelected,
   onSelect,
+  disabledOptions,
 }: GodCardProps) {
   const { t } = useTranslation();
+
+  const options = ['True', 'False', 'Random'];
 
   return (
     <div
@@ -25,24 +30,44 @@ export function GodCard({
       }`}
       onClick={onSelect}
     >
-      <div className="h-32 bg-gray-700 rounded mb-4 flex items-center justify-center text-4xl font-bold text-indigo-300">
-        {godLabel}
+      <div className="h-32 bg-gray-700 rounded mb-4 flex flex-col items-center justify-center text-indigo-300">
+        <VenetianMask className="w-12 h-12 mb-2" />
+        <span className="text-3xl font-bold">{godLabel}</span>
       </div>
       <div className="text-center mb-2 font-bold">{t(`game.god${godLabel}`)}</div>
-      <select
-        value={selectedGuess}
-        onChange={(e) => {
-          e.stopPropagation();
-          onGuessChange(e.target.value);
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full bg-gray-900 border border-gray-600 rounded p-1 text-sm mb-2"
-      >
-        <option value="Unsure">{t('game.selectIdentity')}</option>
-        <option value="True">{t('game.true')}</option>
-        <option value="False">{t('game.false')}</option>
-        <option value="Random">{t('game.random')}</option>
-      </select>
+      
+      <div className="flex flex-col gap-2 mb-4">
+        {options.map((option) => {
+          const isDisabled = disabledOptions.includes(option);
+          const isCurrent = selectedGuess === option;
+          
+          return (
+            <button
+              key={option}
+              onClick={(e) => {
+                e.stopPropagation();
+                // If clicking currently selected, unselect (set to Unsure)
+                if (isCurrent) {
+                  onGuessChange('Unsure');
+                } else {
+                  onGuessChange(option);
+                }
+              }}
+              disabled={isDisabled}
+              className={`py-1 px-2 rounded text-sm font-medium transition-colors border ${
+                isCurrent
+                  ? 'bg-indigo-600 border-indigo-500 text-white'
+                  : isDisabled
+                  ? 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-900 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500'
+              }`}
+            >
+              {t(`identity.${option.toLowerCase()}`)}
+            </button>
+          );
+        })}
+      </div>
+
       <button
         onClick={(e) => {
           e.stopPropagation();

@@ -30,7 +30,7 @@ class GameEngine:
 
     def process_question(
         self, session: GameSession, god_index: int, question: str, db: Session
-    ) -> str:
+    ) -> dict:
         if session.current_question_count >= 3:
             raise ValueError("Max questions reached")
 
@@ -38,14 +38,16 @@ class GameEngine:
         language_map = json.loads(session.language_map)
         target_god = identities[god_index]
 
-        answer = ""
-
-        if target_god == "Random":
-            answer = random.choice(["Ja", "Da"])
-        else:
-            answer = llm_service.ask_god(target_god, language_map, question)
+        answer = llm_service.ask_god(
+            target_god,
+            language_map,
+            question,
+            all_identities=identities,
+            god_index=god_index,
+        )
 
         history = json.loads(session.move_history)
+        print(f"DEBUG: History before append: {history}")
         history.append(
             {
                 "round": session.current_question_count + 1,
@@ -54,6 +56,7 @@ class GameEngine:
                 "answer": answer,
             }
         )
+        print(f"DEBUG: History after append: {history}")
 
         session.move_history = json.dumps(history)
         session.current_question_count += 1
@@ -61,7 +64,10 @@ class GameEngine:
         db.commit()
         db.refresh(session)
 
-        return answer
+        return {
+            "answer": answer,
+            "history": history,
+        }
 
     def submit_guess(
         self, session: GameSession, user_guess: list[str], db: Session
