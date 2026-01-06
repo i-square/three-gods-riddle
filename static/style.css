@@ -1,0 +1,33 @@
+/* Simple CSS overrides */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #1f2937; 
+}
+::-webkit-scrollbar-thumb {
+    background: #4b5563; 
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #6b7280; 
+}
+
+.chat-bubble-user {
+    background-color: #374151;
+    padding: 8px 12px;
+    border-radius: 12px 12px 0 12px;
+    margin-left: auto;
+    max-width: 80%;
+    color: #e5e7eb;
+}
+
+.chat-bubble-god {
+    background-color: #1e3a8a;
+    padding: 8px 12px;
+    border-radius: 12px 12px 12px 0;
+    margin-right: auto;
+    max-width: 80%;
+    color: #bfdbfe;
+    border: 1px solid #1e40af;
+}

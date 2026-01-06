@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlmodel
+pyjwt
+passlib[bcrypt]
+pyyaml
+openai
+slowapi
+python-multipart
+jinja2
+requests
