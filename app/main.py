@@ -8,11 +8,17 @@ import jwt
 from datetime import timedelta, datetime
 import json
 from typing import Optional
+import logging
 
 from app.models import User, GameSession, create_db_and_tables, engine
 from app.services.game_service import game_engine
 from app.core.config import settings
 from pydantic import BaseModel
+
+# Configure logging to show INFO and above messages
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 app = FastAPI(title="Three Gods Riddle")
 

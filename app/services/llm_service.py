@@ -1,6 +1,12 @@
 import openai
 from app.core.config import settings
 import random
+import logging
+import re
+
+
+class LLMAnswerError(Exception):
+    pass
 
 
 class LLMService:
@@ -10,6 +16,7 @@ class LLMService:
         )
         self.model = settings.openai_model
         self.temperature = settings.openai_temperature
+        self.max_tokens = settings.openai_max_tokens
 
     def ask_god(
         self,
@@ -44,7 +51,9 @@ class LLMService:
         base_rule = (
             f"You are playing a logic puzzle. There are two words in your language: '{yes_word}' and '{no_word}'. "
             f"One means 'Yes' and the other means 'No'.\n"
-            f"You must strictly output ONLY the word '{yes_word}' or '{no_word}'."
+            f"You must strictly output ONLY the word '{yes_word}' or '{no_word}' inside a LaTeX box like \\boxed{{Answer}}.\n"
+            f"If the question leads to a contradiction, paradox, or cannot be answered with '{yes_word}' or '{no_word}' "
+            f"consistent with your identity (e.g. asking the God of Truth to lie), you MUST output \\boxed{{Unknown}}."
         )
 
         universal_shortcut = (
@@ -65,8 +74,9 @@ class LLMService:
                 f"{universal_shortcut}\n\n"
                 f"For simple (non-nested) questions:\n"
                 f"1. Evaluate the truth of the question.\n"
-                f"2. If True, output the word for 'Yes'.\n"
-                f"3. If False, output the word for 'No'."
+                f"2. If True, output \\boxed{{{language_map['Yes']}}}.\n"
+                f"3. If False, output \\boxed{{{language_map['No']}}}.\n"
+                f"4. If unanswerable/paradox, output \\boxed{{Unknown}}."
             )
         elif god_identity == "False":
             system_prompt = (
@@ -75,17 +85,20 @@ class LLMService:
                 f"{universal_shortcut}\n\n"
                 f"For simple (non-nested) questions:\n"
                 f"1. Evaluate the truth of the question.\n"
-                f"2. If True, you MUST lie: Output the word for 'No'.\n"
-                f"3. If False, you MUST lie: Output the word for 'Yes'."
+                f"2. If True, you MUST lie: Output \\boxed{{{language_map['No']}}}.\n"
+                f"3. If False, you MUST lie: Output \\boxed{{{language_map['Yes']}}}.\n"
+                f"4. If unanswerable/paradox, output \\boxed{{Unknown}}."
             )
         elif god_identity == "Random":
             # Pre-decide the answer to ensure true randomness, but use LLM to simulate latency/style
+            # Random God also can say Unknown if strictly forced by the prompt logic, but usually just random Yes/No.
+            # However, for consistency with 'boxed' requirement:
             forced_answer = random.choice([yes_word, no_word])
             system_prompt = (
                 f"{identity_context}"
                 f"{base_rule} You are the Random God. "
                 f"You have chosen to answer '{forced_answer}' this time. "
-                f"Output ONLY '{forced_answer}'."
+                f"Output ONLY \\boxed{{{forced_answer}}}."
             )
         else:
             # Fallback
@@ -99,26 +112,42 @@ class LLMService:
                     {"role": "user", "content": user_question},
                 ],
                 temperature=self.temperature,
-                max_tokens=10,
+                max_tokens=self.max_tokens,
             )
             content = response.choices[0].message.content.strip()
 
-            # Post-processing cleanup to ensure only Ja/Da
-            valid_words = [yes_word.lower(), no_word.lower()]
-            if content.lower() not in valid_words:
-                # If LLM hallucinates, fallback to strict logic logic if possible or error
-                # For robustness, we might just return random or retry.
-                # Here we try to find the word in the string.
-                if yes_word.lower() in content.lower():
-                    return yes_word
-                if no_word.lower() in content.lower():
-                    return no_word
-                return random.choice([yes_word, no_word])  # Last resort
+            logging.info(f"user_question: {user_question} LLM response:\n{content}")
 
-            return content
+            # Extract answer from \boxed{...} searching from right to left
+            matches = re.findall(r"\\boxed\{(.*?)\}", content)
+            if not matches:
+                logging.error("No \\boxed{} answer found in LLM response.")
+                raise LLMAnswerError("No answer found")
+
+            # Get the last match
+            extracted_answer = matches[-1].strip()
+
+            # Validation
+            valid_words = [yes_word.lower(), no_word.lower(), "unknown"]
+            if extracted_answer.lower() not in valid_words:
+                logging.error(f"Invalid answer extracted: {extracted_answer}")
+                # Try to recover if it's close? Or just fail.
+                # Strict requirement says "if no, ... error".
+                raise LLMAnswerError(f"Invalid answer: {extracted_answer}")
+
+            # Return with correct casing if it's Yes/No
+            if extracted_answer.lower() == yes_word.lower():
+                return yes_word
+            elif extracted_answer.lower() == no_word.lower():
+                return no_word
+            else:
+                return "Unknown"
+
+        except LLMAnswerError:
+            raise
         except Exception as e:
-            print(f"LLM Error: {e}")
-            return random.choice([yes_word, no_word])  # Graceful degradation
+            logging.error(f"LLM Error: {e}")
+            raise LLMAnswerError(f"LLM execution failed: {str(e)}")
 
 
 llm_service = LLMService()

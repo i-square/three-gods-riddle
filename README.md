@@ -50,7 +50,7 @@ openai:
   base_url: "https://api.openai.com/v1"
   api_key: "sk-xxxxxx"
   model: "gpt-4.1-mini"
-  temperature: 0.1
+  temperature: 0.01
 
 admin:
   root_password: "your_initial_root_password"

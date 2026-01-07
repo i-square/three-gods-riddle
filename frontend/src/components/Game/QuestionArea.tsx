@@ -23,6 +23,7 @@ export function QuestionArea({
   const { t } = useTranslation();
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
   
@@ -67,9 +68,13 @@ export function QuestionArea({
     if (!finalQuestion || targetGod === null || disabled || loading) return;
     
     setLoading(true);
+    setError(null);
     try {
       await onAsk(finalQuestion, targetGod);
       setQuestion('');
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Something went wrong';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -78,6 +83,7 @@ export function QuestionArea({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuestion(val);
+    if (error) setError(null);
 
     // Detect @ trigger
     const lastChar = val.slice(-1);
@@ -187,6 +193,14 @@ export function QuestionArea({
       </div>
 
       <div className="flex gap-2 relative">
+        {/* Error Message */}
+        {error && (
+          <div className="absolute bottom-full left-0 mb-2 w-full bg-red-900/90 border border-red-500 text-red-200 px-4 py-2 rounded shadow-lg text-sm flex justify-between items-center z-20">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="hover:text-white"><X className="w-4 h-4" /></button>
+          </div>
+        )}
+
         {/* Autocomplete Dropdown */}
         {mentionOpen && (
           <div className="absolute bottom-full left-0 mb-2 w-48 bg-gray-800 border border-gray-600 rounded-lg shadow-xl overflow-hidden z-10">

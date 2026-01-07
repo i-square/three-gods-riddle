@@ -14,8 +14,8 @@ class Settings:
                 "openai": {
                     "base_url": "https://api.openai.com/v1",
                     "api_key": "mock-key",
-                    "model": "gpt-3.5-turbo",
-                    "temperature": 0.1,
+                    "model": "gpt-4.1-mini",
+                    "temperature": 0.01,
                 },
                 "admin": {"root_password": "change_me_on_first_login"},
             }
@@ -35,11 +35,15 @@ class Settings:
 
     @property
     def openai_model(self) -> str:
-        return self.config.get("openai", {}).get("model", "gpt-3.5-turbo")
+        return self.config.get("openai", {}).get("model", "gpt-4.1-mini")
 
     @property
     def openai_temperature(self) -> float:
-        return self.config.get("openai", {}).get("temperature", 0.1)
+        return self.config.get("openai", {}).get("temperature", 0.01)
+
+    @property
+    def openai_max_tokens(self) -> int:
+        return self.config.get("openai", {}).get("max_tokens", 4096)
 
     @property
     def root_password(self) -> str:

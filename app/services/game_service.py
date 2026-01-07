@@ -2,7 +2,7 @@ import random
 import json
 from sqlmodel import Session
 from app.models import GameSession
-from app.services.llm_service import llm_service
+from app.services.llm_service import llm_service, LLMAnswerError
 
 
 class GameEngine:
@@ -38,16 +38,21 @@ class GameEngine:
         language_map = json.loads(session.language_map)
         target_god = identities[god_index]
 
-        answer = llm_service.ask_god(
-            target_god,
-            language_map,
-            question,
-            all_identities=identities,
-            god_index=god_index,
-        )
+        try:
+            answer = llm_service.ask_god(
+                target_god,
+                language_map,
+                question,
+                all_identities=identities,
+                god_index=god_index,
+            )
+        except LLMAnswerError:
+            # Humorous error message, do not increment count
+            raise ValueError(
+                "The God seems to be daydreaming and didn't give a clear answer. Please rephrase your question or try again!"
+            )
 
         history = json.loads(session.move_history)
-        print(f"DEBUG: History before append: {history}")
         history.append(
             {
                 "round": session.current_question_count + 1,
@@ -56,7 +61,6 @@ class GameEngine:
                 "answer": answer,
             }
         )
-        print(f"DEBUG: History after append: {history}")
 
         session.move_history = json.dumps(history)
         session.current_question_count += 1

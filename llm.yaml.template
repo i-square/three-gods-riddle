@@ -2,7 +2,8 @@ openai:
   base_url: "https://api.openai.com/v1"
   api_key: "YOUR_API_KEY_HERE"
   model: "gpt-3.5-turbo"
-  temperature: 0.1
+  temperature: 0.01
+  max_tokens: 4096
 
 admin:
   root_password: "change_me_on_first_login"
