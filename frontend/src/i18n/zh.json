@@ -88,7 +88,8 @@
     "unsure": "不确定",
     "victory": "胜利！",
     "victoryMessage": "你成功破解了谜题！",
-    "welcome": "欢迎"
+    "welcome": "欢迎",
+    "selectAllHint": "还有 {{count}} 位神明需要分配身份"
   },
   "history": {
     "actualIdentity": "实际身份",
