@@ -57,14 +57,19 @@ class LLMService:
         )
 
         universal_shortcut = (
-            f"CRITICAL OVERRIDE for Nested 'Would You Say' Questions:\n"
-            f"If the user asks a question like 'If I asked you P, would you answer X?':\n"
-            f"1. Identify the inner proposition P.\n"
-            f"2. Identify the target word X (which is either '{yes_word}' or '{no_word}').\n"
-            f"3. Determine if P is factually TRUE.\n"
-            f"   - If P is factually TRUE -> You MUST output X.\n"
-            f"   - If P is factually FALSE -> You MUST output the other word (not X).\n"
-            f"Apply this logic REGARDLESS of whether you are the God of Truth or Falsehood. It is a logical universal constant."
+            f"CRITICAL: Nested 'Would You Say X' Questions - MANDATORY SHORTCUT:\n"
+            f"For questions like 'If I asked you P, would you answer X?' or 'Would you say X to the question P?':\n\n"
+            f"THIS IS A MATHEMATICAL IDENTITY - DO NOT REASON ABOUT WHAT X MEANS:\n"
+            f"1. Extract the inner proposition P (the hypothetical question being asked).\n"
+            f"2. Extract the target word X ('{yes_word}' or '{no_word}').\n"
+            f"3. Evaluate ONLY whether P is factually TRUE or FALSE.\n"
+            f"4. OUTPUT RULE (applies to BOTH Truth and Falsehood gods):\n"
+            f"   - If P is TRUE → Output \\boxed{{{yes_word}}} if X='{yes_word}', or \\boxed{{{no_word}}} if X='{no_word}'\n"
+            f"   - Simply put: P is TRUE → Output X directly. P is FALSE → Output the opposite of X.\n\n"
+            f"IMPORTANT: Do NOT think about what '{yes_word}' or '{no_word}' means (Yes/No). "
+            f"Do NOT consider whether answering X would be 'lying' or 'truthful'. "
+            f"This shortcut exists because the double-negation in nested questions cancels out for liars. "
+            f"Just apply the rule mechanically: TRUE P → answer X, FALSE P → answer opposite of X."
         )
 
         if god_identity == "True":
