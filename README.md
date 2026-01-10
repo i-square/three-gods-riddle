@@ -68,7 +68,8 @@ export ROOT_PASSWORD="your_root_password"
 python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-后端服务将启动在 `http://127.0.0.1:8000`。
+- 后端服务将启动在 `http://127.0.0.1:8000`
+  - 如修改，需同步修改前端配置 [vite.config.ts](./frontend/vite.config.ts) 里的后端地址
 
 ### 4. 前端安装
 
@@ -116,8 +117,6 @@ npm run build
 │   │   ├── store/      # 状态管理
 │   │   └── types/      # TypeScript 类型
 │   └── package.json
-├── static/             # 旧版静态资源
-├── templates/          # 旧版 HTML 模板
 ├── llm.yaml.template
 └── requirements.txt
 ```
