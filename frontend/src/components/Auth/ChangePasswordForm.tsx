@@ -26,8 +26,15 @@ export function ChangePasswordForm() {
     try {
       await authApi.changePassword(currentPassword, newPassword);
       setMustChangePassword(false);
-    } catch {
-      setError(t('common.error'));
+    } catch (err: unknown) {
+      const detail =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { detail?: string } } }).response?.data?.detail === 'string'
+          ? (err as { response: { data: { detail: string } } }).response.data.detail
+          : null;
+      setError(detail || t('common.error'));
     } finally {
       setLoading(false);
     }

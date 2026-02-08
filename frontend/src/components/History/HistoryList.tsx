@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trophy, X, Calendar, ChevronRight, Loader2 } from 'lucide-react';
 import { historyApi } from '../../services/api';
@@ -12,13 +12,13 @@ export function HistoryList({ onSelectGame }: HistoryListProps) {
   const { t } = useTranslation();
   const [games, setGames] = useState<GameHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const offsetRef = useRef(0);
 
-  const loadGames = async (reset = false) => {
+  const loadGames = useCallback(async (reset = false) => {
     setLoading(true);
     try {
-      const newOffset = reset ? 0 : offset;
+      const newOffset = reset ? 0 : offsetRef.current;
       const data = await historyApi.getHistory(20, newOffset);
       if (reset) {
         setGames(data);
@@ -26,15 +26,15 @@ export function HistoryList({ onSelectGame }: HistoryListProps) {
         setGames((prev) => [...prev, ...data]);
       }
       setHasMore(data.length === 20);
-      setOffset(newOffset + data.length);
+      offsetRef.current = newOffset + data.length;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadGames(true);
-  }, []);
+    void loadGames(true);
+  }, [loadGames]);
 
   if (loading && games.length === 0) {
     return (
@@ -123,7 +123,7 @@ export function HistoryList({ onSelectGame }: HistoryListProps) {
             disabled={loading}
             className="text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
           >
-            {loading ? t('common.loading') : 'Load more...'}
+            {loading ? t('common.loading') : t('game.loadMore')}
           </button>
         </div>
       )}

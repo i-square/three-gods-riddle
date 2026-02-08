@@ -29,6 +29,7 @@ export interface MoveHistory {
   god_index: number;
   question: string;
   answer: string;
+  is_masked?: boolean;
 }
 
 export interface GameResult {

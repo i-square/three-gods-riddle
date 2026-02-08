@@ -124,16 +124,26 @@ export function GameReplay({ gameId, onBack }: GameReplayProps) {
           ) : (
             game.move_history.map((move, idx) => (
               <div key={idx} className="bg-gray-900 rounded-lg p-4">
+                {(() => {
+                  const isMasked = move.is_masked || move.answer === 'Unknown';
+                  return (
+                    <>
                 <div className="text-sm text-indigo-400 mb-2">
                   {t('history.round', { num: move.round })} - {t(`game.god${godLabels[move.god_index]}`)}
                 </div>
                 <div className="mb-2">
-                  <span className="text-gray-400">Q:</span> {move.question}
+                  <span className="text-gray-400">Q:</span>{' '}
+                  <span className={isMasked ? 'text-gray-500 line-through' : ''}>{move.question}</span>
                 </div>
                 <div>
                   <span className="text-gray-400">A:</span>{' '}
-                  <span className="text-yellow-300 font-bold">{move.answer}</span>
+                  <span className={isMasked ? 'text-gray-500 line-through font-bold' : 'text-yellow-300 font-bold'}>
+                    {move.answer}
+                  </span>
                 </div>
+                    </>
+                  );
+                })()}
               </div>
             ))
           )}

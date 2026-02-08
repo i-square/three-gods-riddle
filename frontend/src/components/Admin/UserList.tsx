@@ -27,7 +27,9 @@ export function UserList() {
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, is_disabled: result.is_disabled } : u))
       );
-    } catch {}
+    } catch (error) {
+      console.error('Failed to toggle user status:', error);
+    }
   };
 
   if (loading) {
@@ -70,7 +72,7 @@ export function UserList() {
                 <span className="font-medium">{user.id}</span>
                 {user.is_admin && (
                   <span className="ml-2 text-xs bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded">
-                    Admin
+                    {t('nav.admin')}
                   </span>
                 )}
               </td>

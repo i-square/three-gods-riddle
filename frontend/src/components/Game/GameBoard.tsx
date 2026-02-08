@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Lightbulb, Loader2, Sparkles, ScrollText } from 'lucide-react';
+import { Lightbulb, Loader2, Sparkles, ScrollText, ArrowRight, BrainCircuit } from 'lucide-react';
 import { gameApi } from '../../services/api';
 import { GodCard } from './GodCard';
 import { QuestionArea } from './QuestionArea';
@@ -29,12 +29,9 @@ export function GameBoard() {
       setHistory([]);
       setQuestionsLeft(3);
       setResult(null);
-      // Generate random avatar seeds for each god
-      setAvatarSeeds([
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-        Math.floor(Math.random() * 10),
-      ]);
+      const availableSeeds = Array.from({ length: 10 }, (_, i) => i);
+      const shuffled = availableSeeds.sort(() => Math.random() - 0.5);
+      setAvatarSeeds(shuffled.slice(0, 3));
     } finally {
       setLoading(false);
     }
@@ -69,9 +66,14 @@ export function GameBoard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
-        <p className="text-gray-400">{t('common.loading')}</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+        <div className="relative">
+          <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-20 animate-pulse-glow" />
+          <Loader2 className="w-16 h-16 text-indigo-400 animate-spin-slow relative z-10" />
+        </div>
+        <p className="text-indigo-200 font-medium tracking-widest uppercase text-sm animate-pulse">
+          {t('common.loading')}
+        </p>
       </div>
     );
   }
@@ -80,115 +82,138 @@ export function GameBoard() {
   const allGuessed = !guesses.includes('Unsure');
 
   return (
-    <div className="animate-fade-in">
-      {/* Header */}
-      <header className="mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <Sparkles className="w-5 h-5 text-white" />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      {/* Header Section */}
+      <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+              <BrainCircuit className="w-6 h-6 text-indigo-400" />
+            </div>
+            <h1 className="text-4xl font-bold text-white tracking-tight">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+                {t('game.headerTitle')}
+              </span> {t('game.headerSubtitle')}
+            </h1>
           </div>
-          <h1 className="text-2xl font-bold gradient-text">{t('game.title')}</h1>
+          <p className="text-gray-400 max-w-xl leading-relaxed">
+            {t('game.description')}
+          </p>
         </div>
-        <button
-          onClick={() => setShowTip(!showTip)}
-          className={`
-            p-2.5 rounded-xl transition-all duration-300
-            ${showTip
-              ? 'bg-yellow-500/20 text-yellow-400 shadow-lg shadow-yellow-500/20'
-              : 'text-gray-400 hover:text-yellow-400 hover:bg-gray-800/50'
-            }
-          `}
-          title={t('tutorial.step5Title')}
-        >
-          <Lightbulb className="w-5 h-5" />
-        </button>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowTip(!showTip)}
+            className={`
+              flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 border
+              ${showTip
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                : 'bg-gray-800/50 border-white/5 text-gray-400 hover:bg-gray-800 hover:text-white'
+              }
+            `}
+          >
+            <Lightbulb className="w-4 h-4" />
+            <span className="text-sm font-medium">{t('tutorial.step5Title')}</span>
+          </button>
+        </div>
       </header>
 
-      {/* Tip panel */}
+      {/* Tip Panel */}
       {showTip && (
-        <div className="glass rounded-2xl p-5 mb-6 border border-yellow-500/20 animate-fade-in-up">
-          <h4 className="font-bold text-yellow-400 mb-2 flex items-center gap-2">
-            <Lightbulb className="w-4 h-4" />
-            {t('tutorial.step5Title')}
+        <div className="glass-panel rounded-2xl p-6 mb-8 border-l-4 border-l-amber-500 animate-fade-in-up">
+          <h4 className="font-bold text-amber-400 mb-2 flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            {t('game.strategicInsight')}
           </h4>
-          <p className="text-sm text-gray-300 leading-relaxed">{t('tutorial.step5Desc')}</p>
+          <p className="text-gray-300 leading-relaxed">{t('tutorial.step5Desc')}</p>
         </div>
       )}
 
-      {/* God cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {godLabels.map((label, idx) => (
-          <GodCard
-            key={label}
-            godIndex={idx}
-            godLabel={label}
-            selectedGuess={guesses[idx]}
-            onGuessChange={(value) => handleGuessChange(idx, value)}
-            isSelected={selectedGod === idx}
-            onSelect={() => setSelectedGod(idx)}
-            disabledOptions={guesses.filter((g, i) => i !== idx && g !== 'Unsure')}
-            avatarSeed={avatarSeeds[idx]}
-          />
-        ))}
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column: God Cards */}
+        <div className="lg:col-span-7 space-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {godLabels.map((label, idx) => (
+              <GodCard
+                key={label}
+                godIndex={idx}
+                godLabel={label}
+                selectedGuess={guesses[idx]}
+                onGuessChange={(value) => handleGuessChange(idx, value)}
+                isSelected={selectedGod === idx}
+                onSelect={() => setSelectedGod(idx)}
+                disabledOptions={guesses.filter((g, i) => i !== idx && g !== 'Unsure')}
+                avatarSeed={avatarSeeds[idx]}
+              />
+            ))}
+          </div>
 
-      {/* Rules section */}
-      <div className="glass rounded-2xl p-5 mb-6 border border-white/5 animate-fade-in-up">
-        <div className="flex items-center gap-2 mb-3">
-          <ScrollText className="w-4 h-4 text-indigo-400" />
-          <h3 className="font-semibold text-gray-200">{t('game.rulesTitle')}</h3>
+          {/* Rules Summary */}
+          <div className="glass-card rounded-2xl p-6 border border-white/5">
+            <div className="flex items-center gap-2 mb-4">
+              <ScrollText className="w-5 h-5 text-indigo-400" />
+              <h3 className="font-bold text-gray-200 uppercase tracking-wider text-sm">{t('game.rulesTitle')}</h3>
+            </div>
+            <ul className="space-y-3 text-sm text-gray-400">
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5" />
+                <span>{t('game.rule1')}</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5" />
+                <span>{t('game.rule2')}</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5" />
+                <span>{t('game.rule3')}</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Submit Action */}
+          <div className="flex flex-col items-center justify-center pt-4">
+            <button
+              onClick={handleSubmit}
+              className={`
+                group relative px-8 py-4 rounded-2xl font-bold text-lg tracking-wide
+                transition-all duration-500 w-full sm:w-auto min-w-[200px]
+                ${allGuessed
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-[0_0_30px_rgba(245,158,11,0.4)] hover:shadow-[0_0_50px_rgba(245,158,11,0.6)] hover:scale-105'
+                  : 'bg-gray-800 text-gray-500 cursor-not-allowed border border-white/5'
+                }
+              `}
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                {t('game.submitJudgment')}
+                {allGuessed && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+              </span>
+              {allGuessed && (
+                <div className="absolute inset-0 rounded-2xl bg-white/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              )}
+            </button>
+            
+            {!allGuessed && (
+              <p className="mt-4 text-sm text-gray-500 animate-pulse flex items-center gap-2">
+                <Sparkles className="w-3 h-3" />
+                {t('game.selectAllHint', { count: guesses.filter(g => g === 'Unsure').length })}
+              </p>
+            )}
+          </div>
         </div>
-        <ul className="space-y-2 text-sm text-gray-400">
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-400 mt-0.5">•</span>
-            <span>{t('game.rule1')}</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-400 mt-0.5">•</span>
-            <span>{t('game.rule2')}</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-400 mt-0.5">•</span>
-            <span>{t('game.rule3')}</span>
-          </li>
-        </ul>
-      </div>
 
-      {/* Question area */}
-      <div className="mb-8">
-        <QuestionArea
-          history={history}
-          questionsLeft={questionsLeft}
-          selectedGod={selectedGod}
-          onSelectGod={setSelectedGod}
-          onAsk={handleAsk}
-          disabled={false}
-        />
-      </div>
-
-      {/* Submit button */}
-      <div className="text-center">
-        <button
-          onClick={handleSubmit}
-          className={`
-            relative px-12 py-4 rounded-2xl font-bold text-lg
-            transition-all duration-300 transform hover:scale-105
-            ${allGuessed
-              ? 'bg-gradient-to-r from-yellow-500 to-amber-600 text-gray-900 shadow-xl shadow-yellow-500/30 hover:shadow-yellow-500/50'
-              : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/30 hover:shadow-indigo-500/50'
-            }
-          `}
-        >
-          <span className="relative z-10">{t('game.submitJudgment')}</span>
-          {allGuessed && (
-            <span className="absolute inset-0 rounded-2xl bg-gradient-to-r from-yellow-400 to-amber-500 opacity-0 hover:opacity-20 transition-opacity" />
-          )}
-        </button>
-        {!allGuessed && (
-          <p className="mt-3 text-sm text-gray-500 animate-pulse">
-            {t('game.selectAllHint', { count: guesses.filter(g => g === 'Unsure').length })}
-          </p>
-        )}
+        {/* Right Column: Chat Interface */}
+        <div className="lg:col-span-5">
+          <div className="sticky top-8">
+            <QuestionArea
+              history={history}
+              questionsLeft={questionsLeft}
+              selectedGod={selectedGod}
+              onSelectGod={setSelectedGod}
+              onAsk={handleAsk}
+              disabled={false}
+            />
+          </div>
+        </div>
       </div>
 
       <ResultModal result={result} onClose={startGame} />
