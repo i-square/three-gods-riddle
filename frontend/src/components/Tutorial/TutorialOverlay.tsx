@@ -29,7 +29,9 @@ export function TutorialOverlay({ isOpen, onClose, onComplete }: TutorialOverlay
     if (dontShowAgain) {
       try {
         await authApi.updateTutorial(true);
-      } catch {}
+      } catch (error) {
+        console.error('Failed to update tutorial preference:', error);
+      }
     }
     onComplete();
   };

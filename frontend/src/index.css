@@ -3,68 +3,70 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --color-void: #0f172a;
+  --color-nebula: #4f46e5;
+  --color-starlight: #e0e7ff;
+  --color-truth: #10b981;
+  --color-lie: #ef4444;
+  --color-chaos: #f59e0b;
 }
 
 body {
-  @apply bg-gray-900 text-gray-100 min-h-screen m-0;
-  background:
-    radial-gradient(ellipse at top, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at bottom, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-    #111827;
+  @apply bg-gray-950 text-gray-100 min-h-screen m-0 overflow-x-hidden;
+  background: 
+    radial-gradient(circle at 15% 50%, rgba(79, 70, 229, 0.15) 0%, transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15) 0%, transparent 25%),
+    radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 40%),
+    linear-gradient(to bottom, #0f172a, #1e1b4b);
+  background-attachment: fixed;
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-800/50;
+  @apply bg-gray-900/50;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-indigo-600/50 rounded-full;
+  @apply bg-indigo-600/50 rounded-full hover:bg-indigo-500/70 transition-colors;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-indigo-500/70;
+/* Glassmorphism Utilities */
+.glass-panel {
+  @apply bg-gray-900/40 backdrop-blur-xl border border-white/10 shadow-xl;
+}
+
+.glass-card {
+  @apply bg-gray-800/30 backdrop-blur-md border border-white/5 shadow-lg transition-all duration-300;
+}
+
+.glass-input {
+  @apply bg-gray-900/50 border border-white/10 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 placeholder-gray-500 text-gray-100;
+}
+
+/* Text Gradients */
+.text-gradient-gold {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500;
+}
+
+.text-gradient-mystic {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300;
 }
 
 /* Animations */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slide-in-left {
-  from { opacity: 0; transform: translateX(-20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
-}
-
-@keyframes float {
+@keyframes float-slow {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.5); }
 }
 
 @keyframes shimmer {
@@ -72,134 +74,80 @@ body {
   100% { background-position: 200% 0; }
 }
 
-@keyframes bounce-in {
-  0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes victory-glow {
-  0%, 100% { box-shadow: 0 0 30px rgba(34, 197, 94, 0.4); }
-  50% { box-shadow: 0 0 60px rgba(34, 197, 94, 0.8); }
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes defeat-shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes typing {
-  0%, 60%, 100% { opacity: 0.3; }
-  30% { opacity: 1; }
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
 }
 
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.4s ease-out;
-}
-
-.animate-slide-in-left {
-  animation: slide-in-left 0.3s ease-out;
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.3s ease-out;
+  animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animate-glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
+.animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+/* Stagger Delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* God Card Specifics */
+.god-card-wrapper {
+  perspective: 1000px;
 }
 
-.animate-bounce-in {
-  animation: bounce-in 0.5s ease-out;
+.god-card-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.animate-victory-glow {
-  animation: victory-glow 1.5s ease-in-out infinite;
+.god-card-wrapper:hover .god-card-inner {
+  transform: translateY(-5px) rotateX(2deg);
 }
 
-.animate-defeat-shake {
-  animation: defeat-shake 0.6s ease-out;
+/* Neon Borders */
+.neon-border-indigo {
+  box-shadow: 0 0 5px theme('colors.indigo.500'), 0 0 10px theme('colors.indigo.500');
 }
 
-/* Staggered animation delays */
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-
-/* Glass morphism effect */
-.glass {
-  background: rgba(31, 41, 55, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.neon-border-green {
+  box-shadow: 0 0 5px theme('colors.emerald.500'), 0 0 10px theme('colors.emerald.500');
 }
 
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.neon-border-red {
+  box-shadow: 0 0 5px theme('colors.rose.500'), 0 0 10px theme('colors.rose.500');
 }
 
-/* God card glow effects */
-.god-glow-true {
-  box-shadow: 0 0 30px rgba(34, 197, 94, 0.3), inset 0 0 20px rgba(34, 197, 94, 0.1);
-}
-
-.god-glow-false {
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.3), inset 0 0 20px rgba(239, 68, 68, 0.1);
-}
-
-.god-glow-random {
-  box-shadow: 0 0 30px rgba(234, 179, 8, 0.3), inset 0 0 20px rgba(234, 179, 8, 0.1);
-}
-
-.god-glow-selected {
-  box-shadow: 0 0 40px rgba(99, 102, 241, 0.5), inset 0 0 30px rgba(99, 102, 241, 0.15);
-}
-
-/* Shimmer loading effect */
-.shimmer {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* Typing indicator */
-.typing-dot {
-  animation: typing 1.4s infinite;
-}
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-/* Button hover effects */
-.btn-glow:hover {
-  box-shadow: 0 0 20px currentColor;
-}
-
-/* Card hover lift */
-.card-hover {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-4px);
+.neon-border-gold {
+  box-shadow: 0 0 5px theme('colors.amber.500'), 0 0 10px theme('colors.amber.500');
 }

@@ -1,12 +1,8 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -20,28 +16,92 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# Virtual environments
-venv/
-env/
-ENV/
+# Testing
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytest_debug.log
 
-# Database
-*.db
-*.sqlite3
+# Environments
+.env
+.env.local
+.env.*.local
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# Frontend build
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+frontend/.turbo/
 
 # Logs
 *.log
+*.log.*
+logs/
 
-# Sensitive Configuration
+# Database
+database.db
+database.db-shm
+database.db-wal
+*.sqlite
+*.sqlite3
+*.db
+
+# Project specific
 llm.yaml
+.llm.yaml
 
-# IDE
-.idea/
-.vscode/
-*.swp
+# Docker
+docker-compose.override.yml
+
+# Deploy runtime data
+deploy/data/
+deploy/logs/
+deploy/.env
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

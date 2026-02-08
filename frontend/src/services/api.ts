@@ -10,8 +10,9 @@ import type {
   AdminUser,
   AdminStats,
 } from '../types';
+import { useAuthStore } from '../store/authStore';
 
-const API_BASE = import.meta.env.DEV ? 'http://localhost:8000' : '';
+const API_BASE = import.meta.env.DEV ? 'http://localhost:8000' : '/api';
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -33,6 +34,10 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
+      window.location.href = '/';
+    }
+    if (error.response?.status === 403 && error.response?.data?.detail === 'Password change required') {
+      useAuthStore.getState().setMustChangePassword(true);
       window.location.href = '/';
     }
     return Promise.reject(error);

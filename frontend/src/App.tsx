@@ -33,15 +33,10 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [showTutorial, setShowTutorial] = useState(false);
   const { user } = useAuthStore();
-  
-  // Auto-show tutorial if not completed
-  useEffect(() => {
-    if (user && !user.tutorial_completed) {
-      setShowTutorial(true);
-    }
-  }, [user]);
+  const [showTutorial, setShowTutorial] = useState(
+    () => !!user && !user.tutorial_completed
+  );
 
   // Map path to nav key
   const getCurrentPage = () => {
@@ -102,7 +97,7 @@ function App() {
       setLoading(false);
     };
     initUser();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, logout, setUser]);
 
   if (loading) {
     return (

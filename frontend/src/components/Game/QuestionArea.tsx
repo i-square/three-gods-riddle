@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Send, Loader2, X, ChevronRight, MessageCircle } from 'lucide-react';
+import { Send, Loader2, X, ChevronRight, MessageSquare, Sparkles } from 'lucide-react';
 import type { MoveHistory } from '../../types';
 
 interface QuestionAreaProps {
@@ -69,8 +69,16 @@ export function QuestionArea({
     try {
       await onAsk(finalQuestion, targetGod);
       setQuestion('');
-    } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Something went wrong';
+    } catch (err: unknown) {
+      const msg =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { detail?: string } } }).response?.data?.detail ===
+          'string'
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail ||
+            'Something went wrong'
+          : 'Something went wrong';
       setError(msg);
     } finally {
       setLoading(false);
@@ -135,76 +143,130 @@ export function QuestionArea({
   };
 
   return (
-    <div className="glass rounded-2xl p-6 border border-white/5 animate-fade-in-up">
+    <div className="glass-panel rounded-3xl p-6 animate-fade-in-up delay-200 flex flex-col h-[600px]">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-indigo-400" />
-          <h3 className="font-semibold text-gray-200">{t('game.dialogue')}</h3>
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-500/20 rounded-xl">
+            <MessageSquare className="w-5 h-5 text-indigo-400" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-100">{t('game.dialogue')}</h3>
+            <p className="text-xs text-gray-500">{t('game.communicateSubtitle')}</p>
+          </div>
         </div>
-        <div className={`
-          flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium
-          ${questionsLeft > 0
-            ? 'bg-indigo-500/20 text-indigo-300'
-            : 'bg-red-500/20 text-red-300'
-          }
-        `}>
-          <span className="text-gray-400">{t('game.questionsLeft')}:</span>
-          <span className="font-bold text-lg">{questionsLeft}</span>
+        
+        {/* Questions Left Indicator */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{t('game.questionsLeft')}</span>
+          <div className="flex gap-1">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className={`
+                  w-2 h-8 rounded-full transition-all duration-500
+                  ${i < questionsLeft 
+                    ? 'bg-gradient-to-b from-indigo-400 to-purple-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' 
+                    : 'bg-gray-800/50'
+                  }
+                `}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Chat history */}
       <div
         ref={chatRef}
-        className="bg-gray-900/50 rounded-xl p-4 h-52 overflow-y-auto mb-4 space-y-4"
+        className="flex-1 overflow-y-auto mb-6 space-y-6 pr-2 custom-scrollbar"
       >
         {history.length === 0 && !loading ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-500">
-            <MessageCircle className="w-10 h-10 mb-2 opacity-30" />
-            <p className="text-sm italic">{t('game.noQuestions')}</p>
+          <div className="h-full flex flex-col items-center justify-center text-gray-600 space-y-4">
+            <div className="w-20 h-20 rounded-full bg-gray-800/50 flex items-center justify-center animate-pulse-glow">
+              <Sparkles className="w-8 h-8 text-indigo-500/50" />
+            </div>
+            <p className="text-sm font-medium">{t('game.noQuestions')}</p>
           </div>
         ) : (
           history.map((item, idx) => (
-            <div key={idx} className="space-y-2 animate-fade-in-up" style={{ animationDelay: `${idx * 0.05}s` }}>
+            <div key={idx} className="space-y-4 animate-fade-in-up">
+              {(() => {
+                const isMasked = item.is_masked || item.answer === 'Unknown';
+                return (
+                  <>
               {/* User question */}
               <div className="flex justify-end">
-                <div className="bg-gray-700/80 px-4 py-2.5 rounded-2xl rounded-br-sm max-w-[85%] animate-slide-in-right">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-indigo-400">
-                      → {t(`game.god${godLabels[item.god_index]}`)}
+                <div className="max-w-[85%]">
+                  <div className="flex items-center justify-end gap-2 mb-1 opacity-70">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">
+                      {t('game.toGod', { god: godLabels[item.god_index] })}
                     </span>
                   </div>
-                  <p className="text-gray-200">{item.question}</p>
+                  <div
+                    className={`px-5 py-3 rounded-2xl rounded-tr-sm shadow-lg ${
+                      isMasked
+                        ? 'bg-gray-700/60 text-gray-300 border border-gray-500/30'
+                        : 'bg-indigo-600 text-white'
+                    }`}
+                  >
+                    <p className={`text-sm leading-relaxed ${isMasked ? 'line-through opacity-80' : ''}`}>
+                      {item.question}
+                    </p>
+                  </div>
                 </div>
               </div>
+
               {/* God answer */}
               <div className="flex justify-start">
-                <div className="bg-gradient-to-br from-indigo-900/80 to-purple-900/80 px-4 py-2.5 rounded-2xl rounded-bl-sm max-w-[85%] border border-indigo-500/20 animate-slide-in-left">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-indigo-300">
+                <div className="max-w-[85%]">
+                  <div className="flex items-center gap-2 mb-1 opacity-70">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300">
                       {t(`game.god${godLabels[item.god_index]}`)}
                     </span>
+                    {isMasked && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                        {t('game.maskedUnknown')}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xl font-bold text-yellow-300 tracking-wide">{item.answer}</p>
+                  <div
+                    className={`glass-card px-6 py-4 rounded-2xl rounded-tl-sm border-l-4 ${
+                      isMasked ? 'border-gray-500/60' : 'border-purple-500'
+                    }`}
+                  >
+                    <p
+                      className={`text-2xl font-bold tracking-widest font-serif ${
+                        isMasked
+                          ? 'text-gray-400 line-through opacity-80'
+                          : 'text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-yellow-400'
+                      }`}
+                    >
+                      {item.answer}
+                    </p>
+                  </div>
                 </div>
               </div>
+                  </>
+                );
+              })()}
             </div>
           ))
         )}
+        
         {/* Loading state */}
         {loading && (
           <div className="flex justify-start animate-fade-in">
-            <div className="bg-gradient-to-br from-indigo-900/80 to-purple-900/80 px-4 py-3 rounded-2xl rounded-bl-sm border border-indigo-500/20">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-indigo-300">
-                  {selectedGod !== null ? t(`game.god${godLabels[selectedGod]}`) : '...'}
+            <div className="bg-gray-800/50 px-5 py-4 rounded-2xl rounded-tl-sm border border-white/5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                  {selectedGod !== null ? t('game.godThinking', { god: godLabels[selectedGod] }) : '...'}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="w-2 h-2 bg-yellow-400 rounded-full typing-dot" />
-                <span className="w-2 h-2 bg-yellow-400 rounded-full typing-dot" />
-                <span className="w-2 h-2 bg-yellow-400 rounded-full typing-dot" />
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-100" />
+                <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-200" />
+                <span className="w-2 h-2 bg-pink-400 rounded-full animate-bounce delay-300" />
               </div>
             </div>
           </div>
@@ -212,11 +274,14 @@ export function QuestionArea({
       </div>
 
       {/* Input area */}
-      <div className="flex gap-3 relative">
+      <div className="relative z-20">
         {/* Error message */}
         {error && (
-          <div className="absolute bottom-full left-0 mb-2 w-full bg-red-900/90 border border-red-500/50 text-red-200 px-4 py-2.5 rounded-xl shadow-lg text-sm flex justify-between items-center z-20 animate-fade-in">
-            <span>{error}</span>
+          <div className="absolute bottom-full left-0 mb-4 w-full bg-rose-500/10 border border-rose-500/20 backdrop-blur-md text-rose-200 px-4 py-3 rounded-xl shadow-lg text-sm flex justify-between items-center animate-scale-in">
+            <div className="flex items-center gap-2">
+              <XCircle className="w-4 h-4" />
+              <span>{error}</span>
+            </div>
             <button onClick={() => setError(null)} className="hover:text-white transition-colors">
               <X className="w-4 h-4" />
             </button>
@@ -225,92 +290,107 @@ export function QuestionArea({
 
         {/* Mention dropdown */}
         {mentionOpen && (
-          <div className="absolute bottom-full left-0 mb-2 w-52 glass rounded-xl shadow-2xl overflow-hidden z-10 animate-scale-in border border-white/10">
-            <div className="px-3 py-2 bg-gray-900/80 text-xs text-gray-400 font-semibold border-b border-white/5">
-              Select God
+          <div className="absolute bottom-full left-0 mb-2 w-64 glass-panel rounded-xl overflow-hidden animate-scale-in">
+            <div className="px-4 py-2 bg-gray-900/50 text-[10px] uppercase tracking-wider text-gray-500 font-bold border-b border-white/5">
+              {t('game.selectTarget')}
             </div>
             {godLabels.map((label, idx) => (
               <button
                 key={label}
                 onClick={() => confirmMention(idx)}
                 className={`
-                  w-full text-left px-4 py-2.5 text-sm flex items-center justify-between
+                  w-full text-left px-4 py-3 text-sm flex items-center justify-between
                   transition-all duration-150
                   ${mentionIndex === idx
                     ? 'bg-indigo-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700/50'
+                    : 'text-gray-300 hover:bg-gray-800'
                   }
                 `}
               >
-                <span>{t(`game.god${label}`)} ({label})</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold">
+                    {label}
+                  </div>
+                  <span>{t(`game.god${label}`)}</span>
+                </div>
                 {mentionIndex === idx && <ChevronRight className="w-4 h-4" />}
               </button>
             ))}
           </div>
         )}
 
-        {/* Input field */}
-        <div className={`
-          flex-1 flex items-center rounded-xl border transition-all duration-300
-          ${selectedGod !== null
-            ? 'bg-gray-800/80 border-indigo-500/50 ring-2 ring-indigo-500/20'
-            : 'bg-gray-800/50 border-gray-600/50 focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20'
-          }
-        `}>
-          {selectedGod !== null && (
-            <div className="ml-3 flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg animate-scale-in">
-              <span>@{godLabels[selectedGod]}</span>
-              <button
-                onClick={() => onSelectGod(null)}
-                className="hover:bg-white/20 rounded p-0.5 transition-colors"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          )}
+        <div className="flex gap-3">
+          <div className={`
+            flex-1 flex items-center rounded-2xl transition-all duration-300
+            glass-input
+            ${selectedGod !== null ? 'ring-2 ring-indigo-500/30 border-indigo-500/50' : ''}
+          `}>
+            {selectedGod !== null && (
+              <div className="ml-2 pl-2 flex items-center gap-1.5">
+                <div className="bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-lg shadow-indigo-500/20 animate-scale-in">
+                  <span>@{godLabels[selectedGod]}</span>
+                  <button
+                    onClick={() => onSelectGod(null)}
+                    className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
 
-          <input
-            ref={inputRef}
-            type="text"
-            value={question}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder={selectedGod !== null ? t('game.enterQuestion') : "Type '@' to select God..."}
-            disabled={disabled || questionsLeft === 0}
-            className="flex-1 bg-transparent border-none px-3 py-3 focus:ring-0 text-white placeholder-gray-500 min-w-[100px]"
-            autoComplete="off"
-          />
+            <input
+              ref={inputRef}
+              type="text"
+              value={question}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder={selectedGod !== null ? t('game.enterQuestion') : t('game.mentionHint')}
+              disabled={disabled || questionsLeft === 0}
+              className="flex-1 bg-transparent border-none px-4 py-4 focus:ring-0 text-white placeholder-gray-500 min-w-[100px]"
+              autoComplete="off"
+            />
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={disabled || questionsLeft === 0 || loading || !question.trim() || selectedGod === null}
+            className={`
+              px-6 rounded-2xl font-bold transition-all duration-300
+              flex items-center gap-2
+              ${!disabled && questionsLeft > 0 && question.trim() && selectedGod !== null
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-105'
+                : 'bg-gray-800 text-gray-600 cursor-not-allowed border border-white/5'
+              }
+            `}
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+          </button>
         </div>
-
-        {/* Send button */}
-        <button
-          onClick={handleSubmit}
-          disabled={disabled || questionsLeft === 0 || loading || !question.trim() || selectedGod === null}
-          className={`
-            px-5 rounded-xl font-semibold transition-all duration-300
-            flex items-center gap-2
-            ${!disabled && questionsLeft > 0 && question.trim() && selectedGod !== null
-              ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/50'
-              : 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
-            }
-          `}
-        >
-          {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Send className="w-5 h-5" />
-          )}
-          <span className="hidden sm:inline">{t('game.ask')}</span>
-        </button>
       </div>
-
-      {/* Target indicator */}
-      <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
-        {t('game.targeting')}:
-        <span className={`font-semibold ${selectedGod !== null ? 'text-indigo-400' : 'text-gray-600'}`}>
-          {selectedGod !== null ? t(`game.god${godLabels[selectedGod]}`) : t('game.none')}
-        </span>
-      </p>
     </div>
+  );
+}
+
+function XCircle({ className }: { className?: string }) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6" />
+      <path d="m9 9 6 6" />
+    </svg>
   );
 }

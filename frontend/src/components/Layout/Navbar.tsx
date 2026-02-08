@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Menu, History, Shield, HelpCircle, LogOut, Globe } from 'lucide-react';
+import { Menu, History, Shield, HelpCircle, LogOut, Globe, X, BrainCircuit } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { changeLanguage } from '../../i18n';
 
@@ -18,7 +18,7 @@ export function Navbar({ currentPage, onNavigate, onTutorialClick }: NavbarProps
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems: { key: NavPage; label: string; icon: typeof Menu }[] = [
-    { key: 'game', label: t('nav.game'), icon: Menu },
+    { key: 'game', label: t('nav.game'), icon: BrainCircuit },
     { key: 'history', label: t('nav.history'), icon: History },
   ];
 
@@ -32,69 +32,92 @@ export function Navbar({ currentPage, onNavigate, onTutorialClick }: NavbarProps
   };
 
   return (
-    <nav className="bg-gray-800 border-b border-gray-700">
+    <nav className="sticky top-0 z-40 w-full glass-panel border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <span className="text-xl font-bold text-indigo-400">Three Gods</span>
-            <div className="hidden md:block ml-10">
-              <div className="flex items-baseline space-x-4">
-                {navItems.map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => onNavigate(item.key)}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      currentPage === item.key
-                        ? 'bg-gray-900 text-white'
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    <item.icon className="inline-block w-4 h-4 mr-1" />
-                    {item.label}
-                  </button>
-                ))}
-              </div>
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <span className="text-white font-bold text-lg">3</span>
+            </div>
+            <span className="text-xl font-bold text-gray-100 tracking-tight hidden sm:block">
+              {t('nav.appName')}
+            </span>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:block">
+            <div className="flex items-center space-x-1">
+              {navItems.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => onNavigate(item.key)}
+                  className={`
+                    px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2
+                    ${currentPage === item.key
+                      ? 'bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/20'
+                      : 'text-gray-400 hover:text-gray-100 hover:bg-white/5'
+                    }
+                  `}
+                >
+                  <item.icon className="w-4 h-4" />
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
+          {/* Right Side Actions */}
+          <div className="hidden md:flex items-center space-x-3">
             <button
               onClick={onTutorialClick}
-              className="text-gray-300 hover:text-white p-2 rounded-md hover:bg-gray-700"
+              className="p-2 rounded-xl text-gray-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors"
               title={t('nav.tutorial')}
             >
               <HelpCircle className="w-5 h-5" />
             </button>
+            
+            <div className="h-6 w-px bg-white/10" />
+
             <button
               onClick={toggleLanguage}
-              className="text-gray-300 hover:text-white p-2 rounded-md hover:bg-gray-700 flex items-center"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-gray-100 hover:bg-white/5 transition-colors"
             >
-              <Globe className="w-5 h-5 flex-shrink-0" />
-              <span className="ml-1 text-sm whitespace-nowrap">{i18n.language === 'en' ? '中文' : 'English'}</span>
+              <Globe className="w-4 h-4" />
+              <span>{i18n.language === 'en' ? 'CN' : 'EN'}</span>
             </button>
-            <span className="text-gray-400 text-sm">{user?.id}</span>
-            <button
-              onClick={logout}
-              className="text-red-400 hover:text-red-300 p-2 rounded-md hover:bg-gray-700"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+
+            <div className="flex items-center gap-3 pl-3 border-l border-white/10">
+              <div className="flex flex-col items-end">
+                <span className="text-xs font-bold text-gray-300">{user?.id}</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider">{t('game.playerRole')}</span>
+              </div>
+              <button
+                onClick={logout}
+                className="p-2 rounded-xl text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                title={t('auth.logout')}
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
+          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-gray-300 hover:text-white p-2"
+              className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
             >
-              <Menu className="w-6 h-6" />
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-gray-800 border-t border-gray-700">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="md:hidden glass-panel border-t border-white/5 animate-fade-in-up">
+          <div className="px-4 pt-4 pb-6 space-y-2">
             {navItems.map((item) => (
               <button
                 key={item.key}
@@ -102,42 +125,47 @@ export function Navbar({ currentPage, onNavigate, onTutorialClick }: NavbarProps
                   onNavigate(item.key);
                   setMobileMenuOpen(false);
                 }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  currentPage === item.key
-                    ? 'bg-gray-900 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
+                className={`
+                  w-full flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors
+                  ${currentPage === item.key
+                    ? 'bg-indigo-500/20 text-indigo-300'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  }
+                `}
               >
-                <item.icon className="inline-block w-4 h-4 mr-2" />
+                <item.icon className="w-5 h-5" />
                 {item.label}
               </button>
             ))}
-            <div className="border-t border-gray-700 pt-2 mt-2">
-              <button
-                onClick={() => {
-                  onTutorialClick();
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left px-3 py-2 rounded-md text-gray-300 hover:bg-gray-700"
-              >
-                <HelpCircle className="inline-block w-4 h-4 mr-2" />
-                {t('nav.tutorial')}
-              </button>
-              <button
-                onClick={toggleLanguage}
-                className="block w-full text-left px-3 py-2 rounded-md text-gray-300 hover:bg-gray-700"
-              >
-                <Globe className="inline-block w-4 h-4 mr-2" />
-                {i18n.language === 'en' ? '中文' : 'English'}
-              </button>
-              <button
-                onClick={logout}
-                className="block w-full text-left px-3 py-2 rounded-md text-red-400 hover:bg-gray-700"
-              >
-                <LogOut className="inline-block w-4 h-4 mr-2" />
-                {t('auth.logout')}
-              </button>
-            </div>
+            
+            <div className="h-px bg-white/10 my-4" />
+            
+            <button
+              onClick={() => {
+                onTutorialClick();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white"
+            >
+              <HelpCircle className="w-5 h-5" />
+              {t('nav.tutorial')}
+            </button>
+            
+            <button
+              onClick={toggleLanguage}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white"
+            >
+              <Globe className="w-5 h-5" />
+              {i18n.language === 'en' ? 'Switch to 中文' : 'Switch to English'}
+            </button>
+            
+            <button
+              onClick={logout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-400 hover:bg-rose-500/10"
+            >
+              <LogOut className="w-5 h-5" />
+              {t('auth.logout')}
+            </button>
           </div>
         </div>
       )}
