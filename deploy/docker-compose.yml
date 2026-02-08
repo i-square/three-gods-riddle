@@ -1,0 +1,55 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: 3gods-backend
+    expose:
+      - "8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - OPENAI_TEMPERATURE=${OPENAI_TEMPERATURE:-0.01}
+      - OPENAI_MAX_TOKENS=${OPENAI_MAX_TOKENS:-4096}
+      - ROOT_PASSWORD=${ROOT_PASSWORD:-change_me_on_first_login}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - LOG_FILE=/app/logs/backend.log
+      - DATABASE_URL=sqlite:////app/data/database.db
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost
+    volumes:
+      - ./data:/app/data
+      - ./logs/backend:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: 3gods-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    volumes:
+      - ./logs/frontend:/var/log/nginx
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+networks:
+  default:
+    name: 3gods-network
