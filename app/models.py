@@ -1,6 +1,8 @@
-from typing import Optional, List, Dict
+import os
 from datetime import datetime
-from sqlmodel import Field, SQLModel, JSON, create_engine
+from typing import Optional
+
+from sqlmodel import Field, SQLModel, create_engine
 
 # Database Models
 
@@ -32,11 +34,9 @@ class GameSession(SQLModel, table=True):
 
 
 # Database Connection
-sqlite_file_name = "database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
-
-connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, connect_args=connect_args)
+database_url = os.getenv("DATABASE_URL", "sqlite:///database.db")
+connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+engine = create_engine(database_url, connect_args=connect_args)
 
 
 def create_db_and_tables():

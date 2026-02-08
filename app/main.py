@@ -1,26 +1,30 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import Session, select, col
+import asyncio
+import json
+from datetime import datetime, timedelta
+from typing import Optional
+
 import bcrypt
 import jwt
-from datetime import timedelta, datetime
-import json
-from typing import Optional
-import logging
-
-from app.models import User, GameSession, create_db_and_tables, engine
-from app.services.game_service import game_engine
-from app.core.config import settings
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
+from sqlmodel import Session, col, select
 
-# Configure logging to show INFO and above messages
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+from app.core.config import settings
+from app.core.health import router as health_router
+from app.core.logging import setup_logging
+from app.models import GameSession, User, create_db_and_tables, engine
+from app.services.game_service import game_engine
+
+setup_logging(
+    level=settings.log_level,
+    log_format=settings.log_format,
+    log_file=settings.log_file,
 )
 
 app = FastAPI(title="Three Gods Riddle")
+app.include_router(health_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,9 +41,7 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(
-        plain_password.encode("utf-8"), hashed_password.encode("utf-8")
-    )
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -50,20 +52,16 @@ def get_db():
         yield session
 
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm]
-        )
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        user_id = payload.get("sub")
+        if not isinstance(user_id, str):
             raise credentials_exception
     except jwt.PyJWTError:
         raise credentials_exception
@@ -76,7 +74,13 @@ def get_current_user(
     return user
 
 
-def get_admin_user(current_user: User = Depends(get_current_user)):
+def get_current_user_ready(current_user: User = Depends(get_current_user)):
+    if current_user.must_change_password:
+        raise HTTPException(status_code=403, detail="Password change required")
+    return current_user
+
+
+def get_admin_user(current_user: User = Depends(get_current_user_ready)):
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
@@ -141,8 +145,8 @@ class GameDetailResponse(BaseModel):
     win: bool
     completed: bool
     god_identities: list[str]
-    language_map: dict
-    move_history: list[dict]
+    language_map: dict[str, str]
+    move_history: list[dict[str, object]]
     user_guesses: Optional[list[str]] = None
 
 
@@ -170,9 +174,7 @@ def on_startup():
 @app.post("/register", response_model=TokenResponse)
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     if user_data.username.lower() == "root":
-        raise HTTPException(
-            status_code=400, detail="Cannot register with reserved username"
-        )
+        raise HTTPException(status_code=400, detail="Cannot register with reserved username")
 
     user = db.get(User, user_data.username)
     if user:
@@ -193,9 +195,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/token", response_model=TokenResponse)
-async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
-):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.get(User, form_data.username)
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
@@ -211,13 +211,11 @@ async def login(
     }
 
 
-def create_access_token(data: dict):
+def create_access_token(data: dict[str, object]):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode, settings.secret_key, algorithm=settings.algorithm
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 
 
@@ -258,7 +256,7 @@ async def change_password(
 @app.patch("/users/me/tutorial")
 async def update_tutorial_status(
     req: TutorialUpdateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_ready),
     db: Session = Depends(get_db),
 ):
     current_user.tutorial_completed = req.completed
@@ -269,12 +267,8 @@ async def update_tutorial_status(
 
 @app.post("/game/start")
 async def start_game(
-    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user_ready), db: Session = Depends(get_db)
 ):
-    if current_user.must_change_password:
-        raise HTTPException(
-            status_code=403, detail="Must change password before playing"
-        )
     session = game_engine.start_new_game(current_user.id, db)
     return {
         "session_id": session.session_id,
@@ -285,7 +279,7 @@ async def start_game(
 @app.post("/game/ask")
 async def ask_god(
     req: AskQuestionRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_ready),
     db: Session = Depends(get_db),
 ):
     session = db.get(GameSession, req.session_id)
@@ -298,6 +292,9 @@ async def ask_god(
 
     try:
         result = game_engine.process_question(session, req.god_index, req.question, db)
+        delay = result.get("simulated_delay")
+        if isinstance(delay, (int, float)):
+            await asyncio.sleep(delay)
         return {
             "answer": result["answer"],
             "questions_left": 3 - session.current_question_count,
@@ -310,7 +307,7 @@ async def ask_god(
 @app.post("/game/submit")
 async def submit_guess(
     req: GuessRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_ready),
     db: Session = Depends(get_db),
 ):
     session = db.get(GameSession, req.session_id)
@@ -331,7 +328,7 @@ async def submit_guess(
 async def get_history(
     limit: int = 20,
     offset: int = 0,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_ready),
     db: Session = Depends(get_db),
 ):
     statement = (
@@ -353,7 +350,7 @@ async def get_history(
                     "date": game.created_at.isoformat(),
                     "win": game.is_win,
                     "completed": game.is_completed,
-                    "questions_asked": len(move_history),
+                    "questions_asked": game.current_question_count,
                 }
             )
     return history_data
@@ -362,7 +359,7 @@ async def get_history(
 @app.get("/history/{session_id}", response_model=GameDetailResponse)
 async def get_game_detail(
     session_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_ready),
     db: Session = Depends(get_db),
 ):
     session = db.get(GameSession, session_id)
@@ -373,9 +370,7 @@ async def get_game_detail(
         raise HTTPException(status_code=403, detail="Not authorized to view this game")
 
     if not session.is_completed:
-        raise HTTPException(
-            status_code=400, detail="Cannot view details of incomplete game"
-        )
+        raise HTTPException(status_code=400, detail="Cannot view details of incomplete game")
 
     return GameDetailResponse(
         id=session.session_id,
@@ -406,8 +401,11 @@ async def admin_get_users(
     user_stats = []
     for user in users:
         games = db.exec(select(GameSession).where(GameSession.user_id == user.id)).all()
-        total_games = len(games)
-        wins = sum(1 for g in games if g.is_win)
+        # Only count games where at least one question was asked
+        active_games = [g for g in games if g.current_question_count > 0]
+        completed_games = [g for g in active_games if g.is_completed]
+        total_games = len(active_games)
+        wins = sum(1 for g in completed_games if g.is_win)
 
         user_stats.append(
             {
@@ -417,7 +415,7 @@ async def admin_get_users(
                 "created_at": user.created_at.isoformat(),
                 "total_games": total_games,
                 "wins": wins,
-                "win_rate": (wins / total_games * 100) if total_games > 0 else 0,
+                "win_rate": (wins / len(completed_games) * 100) if completed_games else 0,
             }
         )
 
@@ -429,10 +427,10 @@ async def admin_get_stats(
     admin_user: User = Depends(get_admin_user), db: Session = Depends(get_db)
 ):
     total_users = len(db.exec(select(User)).all())
-    total_games = len(db.exec(select(GameSession)).all())
-    completed_games = db.exec(
-        select(GameSession).where(GameSession.is_completed == True)
-    ).all()
+    all_games = db.exec(select(GameSession)).all()
+    active_games = [g for g in all_games if g.current_question_count > 0]
+    total_games = len(active_games)
+    completed_games = [g for g in active_games if g.is_completed]
     total_wins = sum(1 for g in completed_games if g.is_win)
 
     return {
@@ -440,9 +438,7 @@ async def admin_get_stats(
         "total_games": total_games,
         "completed_games": len(completed_games),
         "total_wins": total_wins,
-        "overall_win_rate": (
-            (total_wins / len(completed_games) * 100) if completed_games else 0
-        ),
+        "overall_win_rate": ((total_wins / len(completed_games) * 100) if completed_games else 0),
     }
 
 
