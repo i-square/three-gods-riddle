@@ -1,14 +1,14 @@
 import asyncio
 import json
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
 
 import bcrypt
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, col, select
 
 from app.core.config import settings
@@ -16,6 +16,7 @@ from app.core.health import router as health_router
 from app.core.logging import setup_logging
 from app.models import GameSession, User, create_db_and_tables, engine
 from app.services.game_service import game_engine
+from app.services.llm_service import get_llm_config_with_source, set_llm_runtime_config
 
 setup_logging(
     level=settings.log_level,
@@ -28,7 +29,7 @@ app.include_router(health_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -148,6 +149,15 @@ class GameDetailResponse(BaseModel):
     language_map: dict[str, str]
     move_history: list[dict[str, object]]
     user_guesses: Optional[list[str]] = None
+
+
+class LLMConfigRequest(BaseModel):
+    mock_llm: bool | None = None
+    openai_api_key: str | None = None
+    openai_base_url: str | None = Field(default=None, min_length=1)
+    openai_model: str | None = Field(default=None, min_length=1)
+    openai_temperature: float | None = Field(default=None, ge=0, le=2)
+    openai_max_tokens: int | None = Field(default=None, gt=0)
 
 
 def init_root_user(db: Session):
@@ -460,6 +470,27 @@ async def admin_toggle_user(
     db.commit()
 
     return {"id": user.id, "is_disabled": user.is_disabled}
+
+
+@app.get("/admin/llm-config")
+async def admin_get_llm_config(admin_user: User = Depends(get_admin_user)) -> dict[str, Any]:
+    return get_llm_config_with_source(mask_secret=True)
+
+
+@app.patch("/admin/llm-config")
+async def admin_update_llm_config(
+    payload: LLMConfigRequest,
+    admin_user: User = Depends(get_admin_user),
+) -> dict[str, Any]:
+    updates = payload.model_dump(exclude_unset=True)
+
+    if updates:
+        set_llm_runtime_config(updates)
+
+    return {
+        "message": "LLM config updated" if updates else "No changes",
+        **get_llm_config_with_source(mask_secret=True),
+    }
 
 
 if __name__ == "__main__":

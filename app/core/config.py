@@ -2,7 +2,6 @@ import os
 
 
 class Settings:
-
     @property
     def openai_api_key(self) -> str:
         return os.getenv("OPENAI_API_KEY", "")
@@ -22,6 +21,10 @@ class Settings:
     @property
     def openai_max_tokens(self) -> int:
         return int(os.getenv("OPENAI_MAX_TOKENS", "4096"))
+
+    @property
+    def mock_llm(self) -> bool:
+        return os.getenv("MOCK_LLM", "false").lower() in ("true", "1", "yes")
 
     @property
     def root_password(self) -> str:
@@ -45,6 +48,14 @@ class Settings:
     @property
     def debug(self) -> bool:
         return os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
+
+    @property
+    def cors_origins(self) -> list[str]:
+        raw = os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173,http://127.0.0.1:5173",
+        )
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
     @property
     def log_level(self) -> str:

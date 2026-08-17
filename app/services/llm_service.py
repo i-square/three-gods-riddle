@@ -1,12 +1,14 @@
-"""
-Refactored LLM service with modular prompt system.
+"""Refactored LLM service with modular prompt system.
+
 Simplified logic, better maintainability, and clear separation of concerns.
 """
 
 import collections
 import logging
 import random
+import threading
 import time
+from typing import Any
 
 import openai
 
@@ -19,17 +21,121 @@ logger = logging.getLogger(__name__)
 
 MAX_LATENCY_SAMPLES = 10
 
+_RUNTIME_LOCK = threading.Lock()
+_RUNTIME_OVERRIDES: dict[str, Any] = {}
+
+_RUNTIME_KEYS = {
+    "mock_llm",
+    "openai_api_key",
+    "openai_base_url",
+    "openai_model",
+    "openai_temperature",
+    "openai_max_tokens",
+}
+
+
+def _mask_secret(value: str) -> str:
+    if not value:
+        return ""
+    if len(value) <= 8:
+        return "*" * len(value)
+    return f"{value[:3]}...{value[-3:]}"
+
+
+def _build_runtime_config() -> tuple[dict[str, Any], dict[str, str]]:
+    config: dict[str, Any] = {}
+    source: dict[str, str] = {}
+
+    with _RUNTIME_LOCK:
+        for key in _RUNTIME_KEYS:
+            if key in _RUNTIME_OVERRIDES:
+                value = _RUNTIME_OVERRIDES[key]
+                source[key] = "runtime"
+            else:
+                value = {
+                    "mock_llm": settings.mock_llm,
+                    "openai_api_key": settings.openai_api_key,
+                    "openai_base_url": settings.openai_base_url,
+                    "openai_model": settings.openai_model,
+                    "openai_temperature": settings.openai_temperature,
+                    "openai_max_tokens": settings.openai_max_tokens,
+                }[key]
+                source[key] = "env"
+
+            config[key] = value
+
+    return config, source
+
+
+def get_llm_config(mask_secret: bool = True) -> dict[str, Any]:
+    config, _ = _build_runtime_config()
+
+    if mask_secret:
+        config["openai_api_key"] = _mask_secret(config["openai_api_key"])
+
+    return config
+
+
+def get_llm_config_sources() -> dict[str, str]:
+    _, source = _build_runtime_config()
+    return source
+
+
+def get_llm_config_with_source(mask_secret: bool = True) -> dict[str, Any]:
+    return {
+        "config": get_llm_config(mask_secret=mask_secret),
+        "sources": get_llm_config_sources(),
+    }
+
+
+def set_llm_runtime_config(overrides: dict[str, Any]) -> None:
+    """Set temporary runtime LLM config.
+
+    Empty values are allowed to pass through (for example empty API key).
+    Explicit `None` clears the override and falls back to environment values.
+    """
+    normalized: dict[str, Any] = {}
+
+    for key in _RUNTIME_KEYS:
+        if key not in overrides:
+            continue
+
+        value = overrides[key]
+        if value is None:
+            continue
+
+        if key == "mock_llm":
+            normalized[key] = bool(value)
+            continue
+        if key == "openai_temperature":
+            normalized[key] = float(value)
+            continue
+        if key == "openai_max_tokens":
+            normalized[key] = int(value)
+            continue
+
+        normalized[key] = str(value)
+
+    with _RUNTIME_LOCK:
+        for key in _RUNTIME_KEYS:
+            if key not in overrides:
+                continue
+
+            if overrides[key] is None:
+                _RUNTIME_OVERRIDES.pop(key, None)
+            else:
+                _RUNTIME_OVERRIDES[key] = normalized[key]
+
+
+def clear_llm_runtime_config() -> None:
+    with _RUNTIME_LOCK:
+        _RUNTIME_OVERRIDES.clear()
+
 
 class LLMService:
     """Refactored LLM service with modular prompt system."""
 
     def __init__(self):
-        self.client = openai.OpenAI(
-            api_key=settings.openai_api_key, base_url=settings.openai_base_url
-        )
-        self.model = settings.openai_model
-        self.temperature = settings.openai_temperature
-        self.max_tokens = settings.openai_max_tokens
         self._latency_window: collections.deque[float] = collections.deque(
             maxlen=MAX_LATENCY_SAMPLES
         )
@@ -46,6 +152,10 @@ class LLMService:
             jitter = random.uniform(-avg * 0.3, avg * 0.3)
             return max(0.5, avg + jitter)
         return random.uniform(1.0, 5.0)
+
+    def _get_config(self) -> dict[str, Any]:
+        config, _ = _build_runtime_config()
+        return config
 
     def ask_god(
         self,
@@ -74,8 +184,10 @@ class LLMService:
         yes_word = language_map["Yes"]
         no_word = language_map["No"]
 
+        config = self._get_config()
+
         # Build prompt configuration
-        config = PromptConfig(
+        prompt_config = PromptConfig(
             yes_word=yes_word,
             no_word=no_word,
             god_identity=god_identity,
@@ -88,23 +200,32 @@ class LLMService:
             return random.choice([yes_word, no_word])
 
         # Test/development fallback to keep local and CI runs deterministic.
-        if settings.openai_api_key in {"", "mock-key"}:
+        if config["mock_llm"]:
+            logger.warning("LLM mock mode enabled (MOCK_LLM=true).")
+            return random.choice([yes_word, no_word])
+
+        if config["openai_api_key"] in {"", "mock-key"}:
             return yes_word
 
         # Build prompt using template system
         forced_answer = random.choice([yes_word, no_word]) if god_identity == "Random" else None
-        system_prompt = PromptTemplates.build_prompt(config, forced_answer)
+        system_prompt = PromptTemplates.build_prompt(prompt_config, forced_answer)
 
         try:
+            client = openai.OpenAI(
+                api_key=config["openai_api_key"],
+                base_url=config["openai_base_url"],
+            )
+
             start_time = time.monotonic()
-            response = self.client.chat.completions.create(
-                model=self.model,
+            response = client.chat.completions.create(
+                model=config["openai_model"],
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_question},
                 ],
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
+                temperature=float(config["openai_temperature"]),
+                max_tokens=int(config["openai_max_tokens"]),
             )
             elapsed = time.monotonic() - start_time
             self._latency_window.append(elapsed)
@@ -148,6 +269,15 @@ class LLMService:
         except openai.APITimeoutError as e:
             logger.error(f"LLM timeout: {e}")
             raise LLMTimeoutError()
+        except openai.APIStatusError as e:
+            message = str(e)
+            if getattr(e, "status_code", None) == 404:
+                message = (
+                    f"LLM request failed (404): endpoint not found. "
+                    f"Check OPENAI_BASE_URL={config['openai_base_url']}"
+                )
+            logger.error(f"LLM API error: {message}")
+            raise LLMAnswerError(f"LLM execution failed: {message}")
         except Exception as e:
             logger.error(f"LLM error: {e}")
             raise LLMAnswerError(f"LLM execution failed: {str(e)}")

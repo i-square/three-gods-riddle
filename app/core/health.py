@@ -77,9 +77,15 @@ async def readiness_check():
 
     # Check LLM configuration
     try:
-        from app.core.config import settings
+        from app.services.llm_service import get_llm_config
 
-        if settings.openai_api_key and settings.openai_api_key != "mock-key":
+        llm_config = get_llm_config(mask_secret=False)
+        if llm_config["mock_llm"]:
+            checks["llm"] = {
+                "status": "healthy",
+                "message": "LLM mock mode enabled",
+            }
+        elif llm_config["openai_api_key"] and llm_config["openai_api_key"] != "mock-key":
             checks["llm"] = {
                 "status": "healthy",
                 "message": "LLM configuration present",
