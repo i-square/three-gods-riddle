@@ -24,7 +24,6 @@
 ```bash
 # 后端
 pip install -r requirements.txt
-cp .env.example .env  # 配置 OPENAI_API_KEY 等
 uvicorn app.main:app --reload
 
 # 前端
