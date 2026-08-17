@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { Loader2, UserPlus } from 'lucide-react';
 
 export function RegisterForm() {
   const { t } = useTranslation();
@@ -29,33 +30,50 @@ export function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm text-gray-400 mb-1">{t('auth.username')}</label>
+        <label className="input-label">{t('auth.username')}</label>
         <input
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:border-indigo-500"
+          className="input-field"
+          placeholder={t('auth.username')}
           required
         />
       </div>
+
       <div>
-        <label className="block text-sm text-gray-400 mb-1">{t('auth.password')}</label>
+        <label className="input-label">{t('auth.password')}</label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:border-indigo-500"
+          className="input-field"
+          placeholder={t('auth.password')}
           required
         />
       </div>
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+
+      {error && <p className="text-sm text-rose-700">{error}</p>}
+
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 text-white font-bold py-2 px-4 rounded transition duration-200"
+        className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
       >
-        {loading ? t('common.loading') : t('auth.registerButton')}
+        {loading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>{t('common.loading')}</span>
+          </>
+        ) : (
+          <>
+            <UserPlus className="w-4 h-4" />
+            <span>{t('auth.registerButton')}</span>
+          </>
+        )}
       </button>
+
+      <p className="input-help">{t('auth.registerRuleHint')}</p>
     </form>
   );
 }

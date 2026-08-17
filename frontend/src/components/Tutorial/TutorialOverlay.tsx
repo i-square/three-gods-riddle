@@ -46,47 +46,48 @@ export function TutorialOverlay({ isOpen, onClose, onComplete }: TutorialOverlay
 
   return (
     <Transition show={isOpen}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/95">
-        <div className="relative w-full max-w-lg mx-4 bg-gray-800 rounded-xl shadow-2xl border border-gray-700">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4">
+        <div className="surface-elevated p-0 w-full max-w-lg relative">
           <button
             onClick={handleSkip}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            className="absolute right-4 top-4 text-slate-500 hover:text-slate-800"
+            aria-label={t('common.close')}
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="p-8">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-indigo-400">{t('tutorial.title')}</h2>
-              <p className="text-gray-400 text-sm">{t('tutorial.subtitle')}</p>
+              <p className="badge mb-2">{t('tutorial.subtitle')}</p>
+              <h2 className="text-2xl sm:text-3xl font-black section-title text-myth">{t('tutorial.title')}</h2>
             </div>
 
             <div className="flex justify-center mb-6">
               {steps.map((_, idx) => (
-                <div
+                <span
                   key={idx}
-                  className={`w-3 h-3 rounded-full mx-1 transition-colors ${
-                    idx === currentStep ? 'bg-indigo-500' : 'bg-gray-600'
+                  className={`w-3 h-3 rounded-full mx-1 transition-all ${
+                    idx === currentStep ? 'bg-teal-600 w-6' : 'bg-slate-300'
                   }`}
                 />
               ))}
             </div>
 
-            <div className="bg-gray-900 rounded-lg p-6 mb-6 min-h-[200px]">
-              <div className="flex items-center mb-4">
-                <Icon className="w-8 h-8 text-indigo-400 mr-3" />
-                <h3 className="text-xl font-semibold text-white">{steps[currentStep].title}</h3>
+            <div className="surface-base rounded-lg p-6 mb-6 border border-slate-200">
+              <div className="flex items-center gap-3 mb-4">
+                <Icon className="w-7 h-7 text-teal-700" />
+                <h3 className="text-xl font-bold text-slate-900">{steps[currentStep].title}</h3>
               </div>
-              <p className="text-gray-300 whitespace-pre-line">{steps[currentStep].desc}</p>
+              <p className="text-slate-700 whitespace-pre-line leading-relaxed">{steps[currentStep].desc}</p>
             </div>
 
             {currentStep === steps.length - 1 && (
-              <label className="flex items-center text-sm text-gray-400 mb-4 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-slate-600 mb-5 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={dontShowAgain}
                   onChange={(e) => setDontShowAgain(e.target.checked)}
-                  className="mr-2 rounded bg-gray-700 border-gray-600"
+                  className="rounded border-slate-300"
                 />
                 {t('tutorial.dontShowAgain')}
               </label>
@@ -96,7 +97,7 @@ export function TutorialOverlay({ isOpen, onClose, onComplete }: TutorialOverlay
               <button
                 onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
                 disabled={currentStep === 0}
-                className="flex items-center px-4 py-2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-soft px-4 py-2"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 {t('common.back')}
@@ -105,7 +106,7 @@ export function TutorialOverlay({ isOpen, onClose, onComplete }: TutorialOverlay
               {currentStep < steps.length - 1 ? (
                 <button
                   onClick={() => setCurrentStep((s) => s + 1)}
-                  className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                  className="btn-primary px-4 py-2"
                 >
                   {t('common.next')}
                   <ChevronRight className="w-4 h-4 ml-1" />
@@ -113,7 +114,7 @@ export function TutorialOverlay({ isOpen, onClose, onComplete }: TutorialOverlay
               ) : (
                 <button
                   onClick={handleComplete}
-                  className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+                  className="btn-primary px-5 py-2"
                 >
                   {t('tutorial.startGame')}
                 </button>

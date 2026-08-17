@@ -26,119 +26,97 @@ export function GodCard({
   const { t } = useTranslation();
 
   const options = [
-    { value: 'True', icon: CheckCircle2, color: 'text-emerald-400', border: 'border-emerald-500/50', bg: 'bg-emerald-500/20' },
-    { value: 'False', icon: XCircle, color: 'text-rose-400', border: 'border-rose-500/50', bg: 'bg-rose-500/20' },
-    { value: 'Random', icon: HelpCircle, color: 'text-amber-400', border: 'border-amber-500/50', bg: 'bg-amber-500/20' },
+    { value: 'True', icon: CheckCircle2, color: 'text-emerald-700', border: 'border-emerald-300', bg: 'bg-emerald-100', ring: 'ring-emerald-300/60' },
+    { value: 'False', icon: XCircle, color: 'text-rose-700', border: 'border-rose-300', bg: 'bg-rose-100', ring: 'ring-rose-300/60' },
+    { value: 'Random', icon: HelpCircle, color: 'text-amber-700', border: 'border-amber-300', bg: 'bg-amber-100', ring: 'ring-amber-300/60' },
   ] as const;
 
   return (
     <div
-      className={`
-        god-card-wrapper relative group cursor-pointer
-        animate-fade-in-up
-      `}
-      style={{ animationDelay: `${godIndex * 150}ms` }}
+      className={`god-card-wrapper animate-fade-in-up`}
+      style={{ animationDelay: `${godIndex * 140}ms` }}
       onClick={onSelect}
     >
-      <div className={`
-        god-card-inner relative h-full
-        glass-card rounded-3xl p-6
-        border-2 transition-all duration-500
-        ${isSelected 
-          ? 'border-indigo-400 shadow-[0_0_30px_rgba(99,102,241,0.3)] scale-[1.02]' 
-          : 'border-white/5 hover:border-indigo-500/30 hover:shadow-lg'
-        }
-      `}>
-        {/* Selection Indicator */}
+      <div
+        className={`god-card-inner h-full surface-muted rounded-[var(--radius-3xl)] p-5 border-2 transition-all duration-300 ${
+          isSelected
+            ? 'border-teal-300/90 shadow-[0_0_0_1px_rgba(13,148,136,0.45)] scale-[1.015]'
+            : 'border-slate-300/80 hover:border-teal-300/90 hover:shadow-[0_12px_24px_rgba(13,148,136,0.15)]'
+        }`}
+      >
         {isSelected && (
-          <div className="absolute -top-3 -right-3 bg-indigo-500 text-white p-2 rounded-full shadow-lg animate-bounce-in z-20">
-            <Sparkles className="w-5 h-5 animate-spin-slow" />
+          <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-lg z-10">
+            <Sparkles className="w-4 h-4" />
           </div>
         )}
 
-        {/* Avatar Section */}
-        <div className={`
-          relative h-40 rounded-2xl mb-6 flex flex-col items-center justify-center
-          bg-gradient-to-b from-gray-800/50 to-gray-900/50
-          border border-white/5 overflow-hidden
-          group-hover:border-indigo-500/20 transition-colors duration-500
-        `}>
-          {/* Background Glow */}
-          <div className={`
-            absolute inset-0 opacity-30 transition-opacity duration-500
-            bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))]
-            ${isSelected ? 'from-indigo-500/40 via-transparent to-transparent opacity-60' : 'from-gray-700/20 via-transparent to-transparent'}
-          `} />
-          
-          <div className={`relative z-10 transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-105'}`}>
+        <div className="relative h-40 rounded-2xl mb-5 border border-slate-300/80 overflow-hidden bg-gradient-to-b from-white to-slate-100 flex items-center justify-center">
+          <div
+            className={`absolute inset-0 transition-opacity duration-300 ${
+              isSelected ? 'opacity-80' : 'opacity-40'
+            } bg-[radial-gradient(circle_at_top_left,_rgba(13,148,136,0.18),_transparent_50%),_radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.17),_transparent_50%)]`}
+          />
+          <div
+            className={`relative z-10 transform transition-transform duration-400 ${
+              isSelected ? 'scale-110' : ''
+            }`}
+          >
             <MysticalAvatar isSelected={isSelected} seed={avatarSeed} />
           </div>
-
-          <div className="absolute bottom-3 left-0 right-0 text-center">
-            <span className={`
-              text-2xl font-bold tracking-wider
-              ${isSelected ? 'text-gradient-mystic' : 'text-gray-400'}
-            `}>
+          <div className="absolute inset-x-0 bottom-3 text-center">
+            <span className={`text-2xl font-black tracking-wider section-title ${isSelected ? 'text-brand-gradient' : 'text-slate-700'}`}>
               {godLabel}
             </span>
           </div>
         </div>
 
-        {/* Identity Selection */}
-        <div className="space-y-3 mb-6">
-          <p className="text-xs text-center text-gray-500 uppercase tracking-widest font-semibold mb-2">
+        <div className="text-center mb-4">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-600 font-bold">
             {t('game.god')} {godLabel} {t('game.identity')}
           </p>
-          <div className="grid grid-cols-3 gap-2">
-            {options.map((opt) => {
-              const isCurrent = selectedGuess === opt.value;
-              const isDisabled = disabledOptions.includes(opt.value);
-              const Icon = opt.icon;
-
-              return (
-                <button
-                  key={opt.value}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!isDisabled) onGuessChange(isCurrent ? 'Unsure' : opt.value);
-                  }}
-                  disabled={isDisabled}
-                  className={`
-                    relative flex flex-col items-center justify-center p-2 rounded-xl border transition-all duration-200
-                    ${isCurrent 
-                      ? `${opt.bg} ${opt.border} ${opt.color} shadow-lg scale-105 ring-1 ring-inset ring-white/10` 
-                      : isDisabled
-                        ? 'opacity-30 cursor-not-allowed border-transparent bg-gray-800/50'
-                        : 'border-white/5 bg-gray-800/30 text-gray-400 hover:bg-gray-700/50 hover:border-white/10'
-                    }
-                  `}
-                  title={t(`identity.${opt.value.toLowerCase()}`)}
-                >
-                  <Icon className={`w-5 h-5 mb-1 ${isCurrent ? 'animate-pulse' : ''}`} />
-                  <span className="text-[10px] font-bold uppercase">{t(`identity.${opt.value.toLowerCase()}Short`)}</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
 
-        {/* Action Button */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {options.map((opt) => {
+            const isCurrent = selectedGuess === opt.value;
+            const isDisabled = disabledOptions.includes(opt.value);
+            const Icon = opt.icon;
+
+            return (
+              <button
+                key={opt.value}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isDisabled) onGuessChange(isCurrent ? 'Unsure' : opt.value);
+                }}
+                disabled={isDisabled}
+                className={`
+                  relative rounded-xl border p-2 transition-all duration-200 flex flex-col items-center justify-center gap-1
+                  ${
+                    isCurrent
+                      ? `${opt.bg} ${opt.border} ${opt.color} shadow-md ring-2 ${opt.ring}`
+                      : isDisabled
+                      ? 'bg-slate-100/70 text-slate-400 border-transparent cursor-not-allowed'
+                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                  }
+                `}
+                title={t(`identity.${opt.value.toLowerCase()}`)}
+              >
+                <Icon className={`w-4 h-4 ${isCurrent ? 'animate-pulse' : ''}`} />
+                <span className="text-[10px] font-bold uppercase">{t(`identity.${opt.value.toLowerCase()}Short`)}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <button
           onClick={(e) => {
             e.stopPropagation();
             onSelect();
           }}
-          className={`
-            w-full py-3 rounded-xl font-bold text-sm tracking-wide
-            flex items-center justify-center gap-2
-            transition-all duration-300
-            ${isSelected
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 ring-2 ring-indigo-400/50'
-              : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white border border-white/5'
-            }
-          `}
+          className="btn-soft w-full py-2.5 flex items-center justify-center gap-2"
         >
-          <Zap className={`w-4 h-4 ${isSelected ? 'fill-current' : ''}`} />
+          <Zap className={`w-4 h-4 ${isSelected ? 'text-teal-700' : 'text-slate-600'}`} />
           {t('game.askGod', { god: godLabel })}
         </button>
       </div>

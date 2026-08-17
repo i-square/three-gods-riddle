@@ -74,3 +74,28 @@ export interface AdminStats {
   total_wins: number;
   overall_win_rate: number;
 }
+
+export interface LLMConfig {
+  mock_llm: boolean;
+  openai_api_key: string;
+  openai_base_url: string;
+  openai_model: string;
+  openai_temperature: number;
+  openai_max_tokens: number;
+}
+
+export type LLMConfigSource = 'env' | 'runtime';
+
+export interface LLMConfigResponse {
+  config: LLMConfig;
+  sources: Record<keyof LLMConfig, LLMConfigSource>;
+}
+
+export interface LLMConfigUpdatePayload {
+  mock_llm?: boolean | null;
+  openai_api_key?: string | null;
+  openai_base_url?: string | null;
+  openai_model?: string | null;
+  openai_temperature?: number | null;
+  openai_max_tokens?: number | null;
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Trophy, X, Calendar, Loader2 } from 'lucide-react';
+import { ArrowLeft, Trophy, X, Calendar, Loader2, Sparkles } from 'lucide-react';
 import { historyApi } from '../../services/api';
 import type { GameDetail } from '../../types';
 
@@ -29,17 +29,18 @@ export function GameReplay({ gameId, onBack }: GameReplayProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+      <div className="surface-base p-10 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-teal-700 animate-spin" />
       </div>
     );
   }
 
   if (!game) {
     return (
-      <div className="text-center py-16">
-        <p className="text-gray-400">{t('common.error')}</p>
-        <button onClick={onBack} className="text-indigo-400 hover:text-indigo-300 mt-4">
+      <div className="surface-base p-10 text-center">
+        <p className="text-slate-700">{t('common.error')}</p>
+        <button onClick={onBack} className="text-teal-700 hover:text-teal-800 mt-4 inline-flex items-center gap-1">
+          <ArrowLeft className="w-4 h-4" />
           {t('common.back')}
         </button>
       </div>
@@ -49,98 +50,88 @@ export function GameReplay({ gameId, onBack }: GameReplayProps) {
   const godLabels = ['A', 'B', 'C'];
 
   return (
-    <div>
-      <button
-        onClick={onBack}
-        className="flex items-center text-gray-400 hover:text-white mb-6"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
+    <div className="space-y-6">
+      <button onClick={onBack} className="btn-soft px-4 py-2.5 inline-flex items-center gap-2">
+        <ArrowLeft className="w-4 h-4" />
         {t('common.back')}
       </button>
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-indigo-400">{t('history.gameDetails')}</h1>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center text-gray-400 text-sm">
-            <Calendar className="w-4 h-4 mr-2" />
-            {new Date(game.date).toLocaleDateString()}
+      <header className="surface-base p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black section-title text-slate-900">{t('history.gameDetails')}</h1>
+            <p className="text-slate-600">{new Date(game.date).toLocaleDateString()}</p>
           </div>
+
           {game.win ? (
-            <span className="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-green-900 text-green-300">
-              <Trophy className="w-4 h-4 mr-1" />
+            <span className="status-win">
+              <Trophy className="w-4 h-4" />
               {t('history.win')}
             </span>
           ) : (
-            <span className="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-red-900 text-red-300">
-              <X className="w-4 h-4 mr-1" />
+            <span className="status-loss">
+              <X className="w-4 h-4" />
               {t('history.loss')}
             </span>
           )}
         </div>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <section className="card-grid">
         {godLabels.map((label, idx) => (
-          <div key={label} className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-indigo-300 mb-2">{label}</div>
-              <div className="text-sm text-gray-400 mb-1">{t('history.actualIdentity')}</div>
-              <div className="text-lg font-semibold text-white">
-                {t(`identity.${game.god_identities[idx].toLowerCase()}`)}
-              </div>
-              {game.user_guesses && (
-                <>
-                  <div className="text-sm text-gray-400 mt-2 mb-1">{t('history.yourGuess')}</div>
-                  <div
-                    className={`text-lg font-semibold ${
-                      game.user_guesses[idx] === game.god_identities[idx]
-                        ? 'text-green-400'
-                        : 'text-red-400'
-                    }`}
-                  >
-                    {t(`identity.${game.user_guesses[idx].toLowerCase()}`)}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          <article key={label} className="surface-base p-5 text-center">
+            <div className="text-3xl font-black text-teal-700 mb-1 section-title">{label}</div>
+            <p className="text-sm text-slate-500 mb-2">{t('history.actualIdentity')}</p>
+            <p className="font-semibold text-lg text-slate-900 mb-4">{t(`identity.${game.god_identities[idx].toLowerCase()}`)}</p>
+
+            {game.user_guesses && (
+              <>
+                <p className="text-xs text-slate-500 uppercase tracking-[0.14em]">{t('history.yourGuess')}</p>
+                <p
+                  className={`font-bold text-lg ${
+                    game.user_guesses[idx] === game.god_identities[idx] ? 'text-emerald-700' : 'text-rose-700'
+                  }`}
+                >
+                  {t(`identity.${game.user_guesses[idx].toLowerCase()}`)}
+                </p>
+              </>
+            )}
+          </article>
         ))}
-      </div>
+      </section>
 
-      <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-8">
-        <div className="text-indigo-300 font-semibold mb-2">{t('game.languageMapping')}</div>
-        <div className="text-yellow-400">
+      <section className="surface-base p-5">
+        <div className="text-lg font-bold text-teal-700 mb-2">{t('game.languageMapping')}</div>
+        <p className="text-slate-700">
+          <Sparkles className="w-4 h-4 inline-block mr-2" />
           Yes = "{game.language_map.Yes}", No = "{game.language_map.No}"
-        </div>
-      </div>
+        </p>
+      </section>
 
-      <div className="bg-gray-800 rounded-lg border border-gray-700">
-        <div className="px-4 py-3 border-b border-gray-700">
-          <h3 className="font-semibold">{t('history.questionLog')}</h3>
+      <section className="surface-base p-5">
+        <div className="text-lg font-bold text-teal-700 mb-4 flex items-center gap-2">
+          <Calendar className="w-4 h-4" />
+          {t('history.questionLog')}
         </div>
-        <div className="p-4 space-y-4">
+        <div className="space-y-3">
           {game.move_history.length === 0 ? (
-            <p className="text-gray-400 text-center">{t('game.noQuestions')}</p>
+            <p className="text-slate-600 text-center">{t('game.noQuestions')}</p>
           ) : (
             game.move_history.map((move, idx) => (
-              <div key={idx} className="bg-gray-900 rounded-lg p-4">
+              <div key={idx} className="surface-muted p-4 rounded-xl">
                 {(() => {
                   const isMasked = move.is_masked || move.answer === 'Unknown';
                   return (
                     <>
-                <div className="text-sm text-indigo-400 mb-2">
-                  {t('history.round', { num: move.round })} - {t(`game.god${godLabels[move.god_index]}`)}
-                </div>
-                <div className="mb-2">
-                  <span className="text-gray-400">Q:</span>{' '}
-                  <span className={isMasked ? 'text-gray-500 line-through' : ''}>{move.question}</span>
-                </div>
-                <div>
-                  <span className="text-gray-400">A:</span>{' '}
-                  <span className={isMasked ? 'text-gray-500 line-through font-bold' : 'text-yellow-300 font-bold'}>
-                    {move.answer}
-                  </span>
-                </div>
+                      <p className="text-xs text-slate-500 mb-2">
+                        {t('history.round', { num: move.round })} · {t(`game.god${godLabels[move.god_index]}`)}
+                      </p>
+                      <p className="text-slate-700 mb-2">
+                        <span className="text-slate-500">Q:</span> {isMasked ? <span className="line-through opacity-60">{move.question}</span> : move.question}
+                      </p>
+                      <p className={isMasked ? 'text-slate-500 font-semibold line-through' : 'text-amber-700 font-semibold'}>
+                        <span>A:</span> {isMasked ? <span>{move.answer}</span> : <span>{move.answer}</span>}
+                      </p>
                     </>
                   );
                 })()}
@@ -148,7 +139,7 @@ export function GameReplay({ gameId, onBack }: GameReplayProps) {
             ))
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

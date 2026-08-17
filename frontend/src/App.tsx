@@ -21,8 +21,12 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
   if (mustChangePassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <ChangePasswordForm />
+      <div className="page-shell">
+        <div className="page-content">
+          <div className="surface-elevated p-8 sm:p-10 max-w-xl mx-auto">
+            <ChangePasswordForm />
+          </div>
+        </div>
       </div>
     );
   }
@@ -34,11 +38,8 @@ function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const [showTutorial, setShowTutorial] = useState(
-    () => !!user && !user.tutorial_completed
-  );
+  const [showTutorial, setShowTutorial] = useState(() => !!user && !user.tutorial_completed);
 
-  // Map path to nav key
   const getCurrentPage = () => {
     const path = location.pathname;
     if (path.startsWith('/game')) return 'game';
@@ -48,26 +49,30 @@ function Layout() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar
-        currentPage={getCurrentPage()}
-        onNavigate={(page) => navigate(`/${page}`)}
-        onTutorialClick={() => setShowTutorial(true)}
-      />
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
-        <Routes>
-          <Route path="/game" element={<GameBoard />} />
-          <Route path="/history" element={<HistoryList onSelectGame={(id) => navigate(`/history/${id}`)} />} />
-          <Route path="/history/:id" element={<GameReplayWrapper />} />
-          <Route path="/admin" element={<Dashboard />} />
-          <Route path="*" element={<Navigate to="/game" replace />} />
-        </Routes>
-      </main>
-      <TutorialOverlay
-        isOpen={showTutorial}
-        onClose={() => setShowTutorial(false)}
-        onComplete={() => setShowTutorial(false)}
-      />
+    <div className="page-shell page-enter">
+      <div className="page-content">
+        <Navbar
+          currentPage={getCurrentPage()}
+          onNavigate={(page) => navigate(`/${page}`)}
+          onTutorialClick={() => setShowTutorial(true)}
+        />
+
+        <main className="mt-6 surface-glass p-4 sm:p-5 lg:p-6">
+          <Routes>
+            <Route path="/game" element={<GameBoard />} />
+            <Route path="/history" element={<HistoryList onSelectGame={(id) => navigate(`/history/${id}`)} />} />
+            <Route path="/history/:id" element={<GameReplayWrapper />} />
+            <Route path="/admin" element={<Dashboard />} />
+            <Route path="*" element={<Navigate to="/game" replace />} />
+          </Routes>
+        </main>
+
+        <TutorialOverlay
+          isOpen={showTutorial}
+          onClose={() => setShowTutorial(false)}
+          onComplete={() => setShowTutorial(false)}
+        />
+      </div>
     </div>
   );
 }
@@ -89,7 +94,6 @@ function App() {
         try {
           const userData = await authApi.getCurrentUser();
           setUser(userData);
-          // Tutorial auto-show logic could be handled in Layout or here if we pass prop
         } catch {
           logout();
         }
@@ -101,8 +105,10 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">{t('common.loading')}</div>
+      <div className="page-shell flex items-center justify-center">
+        <div className="surface-elevated px-7 py-6 animate-fade-in-up">
+          <div className="text-sm font-semibold text-teal-700">{t('common.loading')}</div>
+        </div>
       </div>
     );
   }

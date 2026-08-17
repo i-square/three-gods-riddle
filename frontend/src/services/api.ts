@@ -9,10 +9,14 @@ import type {
   GameDetail,
   AdminUser,
   AdminStats,
+  LLMConfigResponse,
+  LLMConfigUpdatePayload,
 } from '../types';
 import { useAuthStore } from '../store/authStore';
 
-const API_BASE = import.meta.env.DEV ? 'http://localhost:8000' : '/api';
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  '/api';
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -132,6 +136,16 @@ export const adminApi = {
     const response = await api.patch<{ id: string; is_disabled: boolean }>(
       `/admin/users/${userId}/disable`
     );
+    return response.data;
+  },
+
+  getLLMConfig: async (): Promise<LLMConfigResponse> => {
+    const response = await api.get<LLMConfigResponse>('/admin/llm-config');
+    return response.data;
+  },
+
+  updateLLMConfig: async (payload: LLMConfigUpdatePayload): Promise<LLMConfigResponse> => {
+    const response = await api.patch<LLMConfigResponse>('/admin/llm-config', payload);
     return response.data;
   },
 };

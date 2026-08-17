@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { Loader2, KeyRound } from 'lucide-react';
 
 export function ChangePasswordForm() {
   const { t } = useTranslation();
@@ -41,51 +42,64 @@ export function ChangePasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-md p-6 bg-gray-800 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-2 text-center text-indigo-400">
-        {t('auth.changePasswordTitle')}
-      </h2>
-      <p className="text-gray-400 text-sm text-center mb-6">
-        {t('auth.changePasswordDesc')}
-      </p>
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900">{t('auth.changePasswordTitle')}</h2>
+        <p className="input-help mt-1">{t('auth.changePasswordDesc')}</p>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm text-gray-400 mb-1">{t('auth.currentPassword')}</label>
+          <label className="input-label">{t('auth.currentPassword')}</label>
           <input
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:border-indigo-500"
+            className="input-field"
             required
           />
         </div>
+
         <div>
-          <label className="block text-sm text-gray-400 mb-1">{t('auth.newPassword')}</label>
+          <label className="input-label">{t('auth.newPassword')}</label>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:border-indigo-500"
+            className="input-field"
             required
           />
         </div>
+
         <div>
-          <label className="block text-sm text-gray-400 mb-1">{t('auth.confirmPassword')}</label>
+          <label className="input-label">{t('auth.confirmPassword')}</label>
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:outline-none focus:border-indigo-500"
+            className="input-field"
             required
           />
         </div>
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+
+        {error && <p className="text-sm text-rose-700">{error}</p>}
+
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 text-white font-bold py-2 px-4 rounded transition duration-200"
+          className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
         >
-          {loading ? t('common.loading') : t('auth.changePassword')}
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>{t('common.loading')}</span>
+            </>
+          ) : (
+            <>
+              <KeyRound className="w-4 h-4" />
+              <span>{t('auth.changePassword')}</span>
+            </>
+          )}
         </button>
       </form>
     </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Menu, History, Shield, HelpCircle, LogOut, Globe, X, BrainCircuit } from 'lucide-react';
+import { Menu, History, Shield, HelpCircle, LogOut, Globe, X, BrainCircuit, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { changeLanguage } from '../../i18n';
 
@@ -12,18 +12,24 @@ interface NavbarProps {
   onTutorialClick: () => void;
 }
 
+const NAV_ICONS: Record<NavPage, typeof Menu> = {
+  game: BrainCircuit,
+  history: History,
+  admin: Shield,
+};
+
 export function Navbar({ currentPage, onNavigate, onTutorialClick }: NavbarProps) {
   const { t, i18n } = useTranslation();
   const { user, isAdmin, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems: { key: NavPage; label: string; icon: typeof Menu }[] = [
-    { key: 'game', label: t('nav.game'), icon: BrainCircuit },
-    { key: 'history', label: t('nav.history'), icon: History },
+  const navItems: { key: NavPage; label: string }[] = [
+    { key: 'game', label: t('nav.game') },
+    { key: 'history', label: t('nav.history') },
   ];
 
   if (isAdmin) {
-    navItems.push({ key: 'admin', label: t('nav.admin'), icon: Shield });
+    navItems.push({ key: 'admin', label: t('nav.admin') });
   }
 
   const toggleLanguage = () => {
@@ -32,143 +38,149 @@ export function Navbar({ currentPage, onNavigate, onTutorialClick }: NavbarProps
   };
 
   return (
-    <nav className="sticky top-0 z-40 w-full glass-panel border-b border-white/5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <span className="text-white font-bold text-lg">3</span>
-            </div>
-            <span className="text-xl font-bold text-gray-100 tracking-tight hidden sm:block">
-              {t('nav.appName')}
-            </span>
+    <header className="surface-base px-3 py-3 md:px-4 rounded-xl shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        {/* brand */}
+        <button
+          onClick={() => onNavigate('game')}
+          className="flex items-center gap-3 px-2 sm:px-3 py-2 rounded-xl hover:bg-slate-100/70 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-amber-500 flex items-center justify-center text-white font-bold tracking-tight text-lg shadow-sm">
+            3
           </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <div className="flex items-center space-x-1">
-              {navItems.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => onNavigate(item.key)}
-                  className={`
-                    px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2
-                    ${currentPage === item.key
-                      ? 'bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/20'
-                      : 'text-gray-400 hover:text-gray-100 hover:bg-white/5'
-                    }
-                  `}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </button>
-              ))}
-            </div>
+          <div className="text-left">
+            <p className="font-black text-lg section-title text-myth">{t('nav.appName')}</p>
+            <p className="text-xs text-slate-500">{t('game.title')}</p>
           </div>
+        </button>
 
-          {/* Right Side Actions */}
-          <div className="hidden md:flex items-center space-x-3">
-            <button
-              onClick={onTutorialClick}
-              className="p-2 rounded-xl text-gray-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors"
-              title={t('nav.tutorial')}
-            >
-              <HelpCircle className="w-5 h-5" />
-            </button>
-            
-            <div className="h-6 w-px bg-white/10" />
+        {/* desktop nav */}
+        <nav className="hidden md:flex items-center gap-2">
+          {navItems.map((item) => {
+            const Icon = NAV_ICONS[item.key];
+            const isActive = currentPage === item.key;
 
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-gray-100 hover:bg-white/5 transition-colors"
-            >
-              <Globe className="w-4 h-4" />
-              <span>{i18n.language === 'en' ? 'CN' : 'EN'}</span>
-            </button>
-
-            <div className="flex items-center gap-3 pl-3 border-l border-white/10">
-              <div className="flex flex-col items-end">
-                <span className="text-xs font-bold text-gray-300">{user?.id}</span>
-                <span className="text-[10px] text-gray-500 uppercase tracking-wider">{t('game.playerRole')}</span>
-              </div>
-              <button
-                onClick={logout}
-                className="p-2 rounded-xl text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                title={t('auth.logout')}
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden glass-panel border-t border-white/5 animate-fade-in-up">
-          <div className="px-4 pt-4 pb-6 space-y-2">
-            {navItems.map((item) => (
+            return (
               <button
                 key={item.key}
-                onClick={() => {
-                  onNavigate(item.key);
-                  setMobileMenuOpen(false);
-                }}
-                className={`
-                  w-full flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-colors
-                  ${currentPage === item.key
-                    ? 'bg-indigo-500/20 text-indigo-300'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                  }
-                `}
+                onClick={() => onNavigate(item.key)}
+                className={`btn-soft px-3.5 py-2 flex items-center gap-2 ${
+                  isActive ? 'bg-teal-50 text-teal-800 border-teal-300' : ''
+                }`}
               >
-                <item.icon className="w-5 h-5" />
-                {item.label}
+                <Icon className={`w-4 h-4 ${isActive ? 'text-teal-700' : 'text-slate-600'}`} />
+                <span className="text-sm">{item.label}</span>
               </button>
-            ))}
-            
-            <div className="h-px bg-white/10 my-4" />
-            
+            );
+          })}
+
+          <div className="w-px h-8 mx-1 bg-slate-300" />
+
+          <button
+            onClick={onTutorialClick}
+            className="btn-soft px-2.5 py-2 text-sm"
+            title={t('nav.tutorial')}
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={toggleLanguage}
+            className="btn-soft px-2.5 py-2 text-sm flex items-center gap-2"
+            title={i18n.language === 'en' ? '切换为中文' : 'Switch to English'}
+          >
+            {i18n.language === 'en' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            <span>{i18n.language === 'en' ? 'CN' : 'EN'}</span>
+          </button>
+        </nav>
+
+        <div className="hidden md:flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-xs text-slate-500 uppercase tracking-[0.16em]">{t('game.playerRole')}</p>
+            <p className="font-semibold text-sm text-slate-800">{user?.id}</p>
+          </div>
+          <button
+            onClick={logout}
+            className="icon-btn btn-danger"
+            title={t('auth.logout')}
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
+
+        <button
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          className="md:hidden icon-btn btn-soft"
+          aria-label="Toggle Menu"
+        >
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {mobileMenuOpen && (
+        <div className="md:hidden mt-4 animate-fade-in-up">
+          <div className="surface-glass p-3 rounded-xl space-y-2">
+            {navItems.map((item) => {
+              const Icon = NAV_ICONS[item.key];
+              const isActive = currentPage === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => {
+                    onNavigate(item.key);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full btn-soft px-3 py-2.5 flex items-center justify-between ${
+                    isActive ? 'bg-teal-50 text-teal-800 border-teal-300' : ''
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Icon className="w-4 h-4" />
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+
+            <div className="h-px bg-slate-200 my-1" />
             <button
               onClick={() => {
                 onTutorialClick();
                 setMobileMenuOpen(false);
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white"
+              className="w-full btn-soft px-3 py-2.5 flex items-center gap-2"
             >
-              <HelpCircle className="w-5 h-5" />
+              <HelpCircle className="w-4 h-4" />
               {t('nav.tutorial')}
             </button>
-            
+
             <button
-              onClick={toggleLanguage}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white"
+              onClick={() => {
+                toggleLanguage();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full btn-soft px-3 py-2.5 flex items-center justify-between"
             >
-              <Globe className="w-5 h-5" />
-              {i18n.language === 'en' ? 'Switch to 中文' : 'Switch to English'}
+              <span className="flex items-center gap-2">
+                <Globe className="w-4 h-4" />
+                {i18n.language === 'en' ? 'Switch to 中文' : 'Switch to English'}
+              </span>
             </button>
-            
+
             <button
               onClick={logout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-400 hover:bg-rose-500/10"
+              className="w-full btn-danger px-3 py-2.5 flex items-center gap-2"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
               {t('auth.logout')}
             </button>
+
+            <div className="pt-1 pl-1 text-xs text-slate-600">
+              {user?.id}
+            </div>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trophy, X, Calendar, ChevronRight, Loader2 } from 'lucide-react';
+import { Trophy, Calendar, ChevronRight, Loader2, Clock3 } from 'lucide-react';
 import { historyApi } from '../../services/api';
 import type { GameHistoryItem } from '../../types';
 
@@ -38,95 +38,90 @@ export function HistoryList({ onSelectGame }: HistoryListProps) {
 
   if (loading && games.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+      <div className="surface-base p-10 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-teal-700 animate-spin" />
       </div>
     );
   }
 
   if (games.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-gray-400">{t('history.noHistory')}</p>
-      </div>
-    );
+    return <p className="surface-base p-10 text-center text-slate-600">{t('history.noHistory')}</p>;
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-indigo-400 mb-6">{t('history.title')}</h1>
+    <section className="space-y-4">
+      <div className="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-black section-title text-slate-900">{t('history.title')}</h1>
+          <p className="text-slate-600">{t('nav.history')}</p>
+        </div>
+      </div>
 
-      <div className="bg-gray-800 rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-700">
-            <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">
-                {t('history.date')}
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">
-                {t('history.questions')}
-              </th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-300">
-                {t('history.result')}
-              </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-300"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {games.map((game) => (
-              <tr key={game.id} className="hover:bg-gray-700/50">
-                <td className="px-4 py-3 text-sm">
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                    {new Date(game.date).toLocaleDateString()}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm">{game.questions_asked}</td>
-                <td className="px-4 py-3">
+      <div className="surface-base overflow-hidden">
+        <div className="hidden lg:grid grid-cols-[1.5fr_0.9fr_0.9fr_0.4fr] gap-3 text-xs font-bold uppercase tracking-[0.1em] text-slate-600 px-4 py-3 border-b border-slate-200">
+          <span>{t('history.date')}</span>
+          <span>{t('history.questions')}</span>
+          <span>{t('history.result')}</span>
+          <span className="text-right">{t('game.title')}</span>
+        </div>
+
+        <div className="divide-y divide-slate-200">
+          {games.map((game) => (
+            <div key={game.id} className="p-4 sm:p-5 lg:rounded-none rounded-xl">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_0.9fr_0.9fr_0.4fr] gap-2 lg:items-center">
+                <div className="text-sm text-slate-700 flex items-center">
+                  <Calendar className="w-4 h-4 mr-2 text-slate-500" />
+                  <span>{new Date(game.date).toLocaleDateString()}</span>
+                </div>
+
+                <div className="text-sm text-slate-700">{t('history.questions')}：{game.questions_asked}</div>
+
+                <div>
                   {!game.completed ? (
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-600 text-gray-300">
+                    <span className="status-neutral">
+                      <Clock3 className="w-3.5 h-3.5" />
                       {t('history.inProgress')}
                     </span>
                   ) : game.win ? (
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-900 text-green-300">
-                      <Trophy className="w-3 h-3 mr-1" />
+                    <span className="status-win">
+                      <Trophy className="w-3.5 h-3.5" />
                       {t('history.win')}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-900 text-red-300">
-                      <X className="w-3 h-3 mr-1" />
+                    <span className="status-loss">
                       {t('history.loss')}
                     </span>
                   )}
-                </td>
-                <td className="px-4 py-3 text-right">
+                </div>
+
+                <div className="text-right">
                   {game.completed && (
                     <button
                       onClick={() => onSelectGame(game.id)}
-                      className="text-indigo-400 hover:text-indigo-300 text-sm flex items-center ml-auto"
+                      className="btn-soft px-3 py-2 text-xs inline-flex items-center"
                     >
                       {t('history.viewDetails')}
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </button>
                   )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {hasMore && (
-        <div className="text-center mt-4">
+        <div className="text-center">
           <button
             onClick={() => loadGames()}
             disabled={loading}
-            className="text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+            className="btn-soft px-4 py-2"
           >
             {loading ? t('common.loading') : t('game.loadMore')}
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 }
